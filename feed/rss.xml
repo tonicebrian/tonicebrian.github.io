@@ -1,0 +1,1013 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Toni Cebrián</title>
+        <link>http://www.tonicebrian.com</link>
+        <description><![CDATA[My personal blog where I talk mostly about programming, machine learning and other things]]></description>
+        <atom:link href="http://www.tonicebrian.com/feed/rss.xml" rel="self"
+                   type="application/rss+xml" />
+        <lastBuildDate>Wed, 06 Nov 2013 10:00:46 UT</lastBuildDate>
+        <item>
+    <title>RecSys 2013</title>
+    <link>http://www.tonicebrian.com/posts/2013/11/06/recsys-2013.html</link>
+    <description><![CDATA[<div class="info">Posted on November  6, 2013</div>
+
+<div class="figure">
+<img src="AcmRecsys-300x42.png" />
+
+</div>
+<p>It has been 3 years since I attended my last RecSys and last week I went again to <a href="http://recsys.acm.org/recsys13/">that conference</a> in Hong Kong. I came back home with lots of useful insights although to get those gems I had to go through lots of boring to death presentations. Hey guys, presenting to an audience doesn’t mean cut and pasting from your latex article directly into your beamer presentation. You have to think about how to communicate to an audience. And don’t tell me it’s about algorithms and complex mathematics, so it was <a href="http://dl.acm.org/citation.cfm?id=2507160">Harald Steck’s</a> from Netflix and it was very pedagogical. Next year make sure you think in your audience before reporting your research.</p>
+<p>This is my personal and biased review of the conference. It’s mainly what I found interesting and what it could be easily deployed at my current employer, <a href="http://www.softonic.com">Softonic</a>.</p>
+<p>On Saturday we had an excellent tutorial about <a href="http://www.slideshare.net/kerveros99/learning-to-rank-for-recommender-system-tutorial-acm-recsys-2013">Learning To Rank for Recommender Systems</a> by <a href="https://twitter.com/alexk_z">Alex</a>, <a href="https://twitter.com/LinasTw">Linas</a>and <a href="https://twitter.com/yueshi_nl">Shi</a>. Here I’m completely biased because I’ve worked with them and I know how good they are, but this tutorial was really interesting and full of stuff. I recommend it for a very good introduction to this complex topic.</p>
+<div class="figure">
+<img src="calle-hong-kong-small-258x300.png" />
+
+</div>
+<p>For me the most interesting session of the conference was the workshop on <a href="http://graphlab.org/lsrs2013/program/#LSRS2013">Large Scale Recommenders</a>. There was an <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_13.pdf">interesting presentation</a> about how to use Multi-armed bandits for recommending videos in a popular Dutch multimedia site. This talk was full of practical information about the technological stack for deploying bandits at scale. Some guys from eBay where presenting how do <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_14.pdf">they recommend items</a> in a domain where users are open to sell whatever they want and describe it free form. They were creating fine grained clusters based mainly on the search queries. The idea was to create semantically consistent cluster of items. They identified different use cases pre-purchase and post-purchase and it seemed that this cluster solution was working very well. For us in the app domain, this also makes sense, when browsing you are interested in similar applications but after a download you are interested in complementary apps not apps in the same niche. <a href="https://twitter.com/kyrpov">Aapo Kyrölä</a> gave two excellent talks about <a href="http://www.slideshare.net/akyrola/largescale-recommendation-systems-on-just-a-pc">GraphChi</a>and about <a href="www.slideshare.net/akyrola/drunkardmob-billions-of-random-walks-on-just-a-pc">Personalized PageRank</a>for Big Data. Read them. Funny comparisons about how much it took for his laptop against giant Hadoop clusters. Main take aways, “Before doing anything, think twice” and “Don’t follow the hype, even GraphChi’s hype”.</p>
+<p>Although I was in different sessions there were other presentations during the weekend that generated Twitter action, like the <a href="http://www.slideshare.net/d0nut/open-recommendation-platform">keynote</a>in the <a href="https://sites.google.com/site/newsrec2013/">News Recommender Systems workshop</a> and the tutorial on <a href="http://www.slideshare.net/anmolbhasin/tutorial-on-people-recommendations-in-social-networks-acm-recsys-2013hong-kong">people recommendations</a> from Linkedin.</p>
+<p>From the Monday sessions I liked two papers trying to introduce diversity in the recommendations. The first <a href="http://dl.acm.org/citation.cfm?id=2507165">Trading-off Among Accuracy, Similarity, Diversity, and Long-tail: A Graph-based Recommendation Approach</a> from <a href="http://www.baidu.com/">Baidu</a> where you can model your costs for multi targeted objectives and a random walk in the graph provides the recommendations. The second paper was <a href="http://research.google.com/pubs/pub41535.html">Nonlinear Latent Factorization by Embedding Multiple User Interests</a> from Google. Here the user is described as a set of latent vectors each one describing one of the user’s interests.</p>
+<p>On Tuesday, the Microsoft’s paper, <a href="http://dl.acm.org/citation.cfm?id=2507168">Xbox Movies Recommendations: Variational Bayes Matrix Factorization with Embedded Feature Selection</a> from <a href="http://www.eng.tau.ac.il/~noamk/">Noam Koenigstein</a> was very interesting and I think we could use a similar approach for recommending software at <a href="http://www.softonic.com/">Softonic</a>. Here a probabilistic graphical model was proposed for an scenario of binary implicit feedback enriched with metadata in the form of tags. From this same author I discovered in the Large Scale Recommenders workshop the work <a href="http://www.eng.tau.ac.il/~noamk/papers/fp093-koenigstein.pdf">he has been doing</a> on using Matrix Factorization results in real time. This paper was the perfect companion to the poster he presented about <a href="http://www.eng.tau.ac.il/~noamk/papers/item_based_recsys_2013.pdf">Item-Oriented recommendations</a>. In the afternoon there was the paper <a href="http://dl.acm.org/citation.cfm?doid=2507157.2507188">Rating Support Interfaces to Improve User Experience and Recommender Accuracy</a> that focused on improving UI for recommenders for helping in eliciting true preferences. Very interesting.  Also of interest were <a href="http://www.slideshare.net/AmitSharma315/pairwise-learning-experiments-with-community-recommendation-on-linkedin">Pairwise learning in recommendations of communities</a> from Linkedin and <a href="http://www.cs.utexas.edu/~inderjit/public_papers/app_recommendation_recsys13.pdf">Which App Will You Use Next</a> that proposed a recommender system that predicts which app has higher probability of being used next based on your past behavior. It would be very interesting to pilot a widget for <a href="http://softonic-moba.softonic.com/">Moba</a>.</p>
+<p>The last day of the conference, had the Industry Session with lots of gems, like Huawei App Store using Deep Neural Networks for recommendations so they don’t spend time doing feature engineering. <a href="http://www.alibaba.com/">Alibaba</a> told that Diversity and Complementary are worse for CTR but better for conversion, so watch your KPIs. <a href="http://www.tencent.com/index_e.shtml">Tencent</a>showed all the metadata for users and items they use and the distributed hybrid algorithm they use to deliver recommendations. For us in the western world, used to the Facebooks and Googles, seeing the technology the Chinese companies are using/developing was a big surprise.</p>
+<div class="figure">
+<img src="neon_hong_kong-small-225x300.png" />
+
+</div>
+<p>The best paper award was <a href="http://www.csie.ntu.edu.tw/~cjlin/papers/libmf.pdf">A Fast Parallel SGD for Matrix Factorization in Shared Memory Systems</a>, hardcore algorithmic approach but far from my day to day routine. I’ve mentioned before the  paper about <a href="http://dl.acm.org/citation.cfm?id=2507160">Rating-prediction and Ranking</a> from Netflix that addresses the selection bias (you are more likely to rate highly/low valued items but nothing in between) as a related sub-problem. By modeling the decision to rate you gain insight on all the unknown ratings.</p>
+<p>The last session about Scalability was the most interesting with all the papers in my ToRead list. <a href="http://dl.acm.org/citation.cfm?id=2507169">Using maximum coverage to optimize recommendation systems</a> used well known algorithms of combinatorial optimization in order to select the set of items with maximum probability of conversion. In <a href="http://dl.acm.org/citation.cfm?id=2507189">Efficient top-n recommendation for very large scale binary rated datasets</a> they presented a large scale matrix factorization algorithm for implicit datasets. This guys presented the extension to the algorithm that won the <a href="http://www.kaggle.com/c/msdchallenge">Million Song contest in Kaggle</a> so this paper must be read carefully. In <a href="http://ssc.io/wp-content/uploads/2011/12/sys024-schelter.pdf">Distributed Matrix Factorization with MapReduce using a series of Broadcast-Joins</a> it was exposed a distributed Alternating Least Squares (ALS) approach to Matrix Factorization that is going to be included in <a href="http://mahout.apache.org/">Mahout</a>. They also taught me about a toolkit for generating synthetic data, <a href="https://github.com/TU-Berlin-DIMA/myriad-toolkit/wiki">Myriad</a>,  something I have to research more carefully.</p>
+<p>And that was it!! I had a very good time and glad to meet lot of people I admire in person. Hopefully see you next year!!</p>
+]]></description>
+    <pubDate>Wed, 06 Nov 2013 10:00:46 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2013/11/06/recsys-2013.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Introduction to the Minhash algorithm</title>
+    <link>http://www.tonicebrian.com/posts/2013/03/11/introduction-to-the-minhash-algorithm.html</link>
+    <description><![CDATA[<div class="info">Posted on March 11, 2013</div>
+
+<p>Say that you have a collection of <em>N</em> objects and you want to want to compare each object against each other. Maybe you are interested in the distance between objects in an Euclidean Space or just the number of attributes or features they share. If you need to perform each comparison, you’ll need to perform <span class="math inline">\(O(N^2)\)</span> and that’s a problem when your N is in the order of the millions or tens of millions, likely the order of your user or item company’s database. Is there a way to perform less comparisons when we aren’t interested in the whole set of comparison but just in finding the set of closest items under a given measure? Yes, the <a href="http://en.wikipedia.org/wiki/MinHash">Minhash Algorithm</a>.</p>
+<p>In this post we are going to be focused in the Jackard Coefficient for determining the closeness between two objects. Each of the N object will have a set of <em>m</em> features where <em>m </em> usually is very large. You can think of the objects in N as the members of a social network or Amazon customers, and the set of features that describe them all the friends they have in the social network or all the books they previously purchased in the second case. Comparing two users would imply comparing their feature sets using the Jackard Coefficient formula:</p>
+<p><span class="math display">\[JackardCoeff(A,B)=\frac{|A\cap B|}{|A\cup B|}\]</span></p>
+<h3 id="understanding-the-minhash-algorithm">Understanding the Minhash Algorithm</h3>
+<p>All the MinHash functionality relies on this mathematical property</p>
+<p><span class="math display">\[P(\min\pi(A)=\min\pi(B)) = \frac{|A\cap B|}{|A\cup B|}\]</span></p>
+<p>Where <span class="math inline">\(\pi\)</span> is a function that creates a permutation of its set argument. This reads as follow, <em>Given a random function over the orderings of the elements of a universe U to which A and B belongs, the probability that the minimum element on both sets coincides is equal to the Jackard Coefficient defined as the number of elements in the intersection of the sets over the number of elements in the union</em>.</p>
+<p>What does this mean? Let’s break down the constituent parts. The function <span class="math inline">\(\pi\)</span> is a function that transforms the natural ordering of a set into a new ordering. There are lots of different functions that create different orders for a given set. Let’s see this with an example.</p>
+<p>Say that our set is the set of vowels in the alphabet <span class="math inline">\(V={a,e,i,o,u}\)</span>. A natural ordering of the elements would be <span class="math inline">\(a&lt;e&lt;i&lt;o&lt;u\)</span>. Another different ordering could be a function <span class="math inline">\(\pi_X\)</span> that given the set of vowels <em>V</em> generates the following ordering <span class="math inline">\(o&lt;e&lt;i&lt;u&lt;a\)</span>. For convenience and since the ordering is a <a href="http://en.wikipedia.org/wiki/Total_order">Total Order</a>, we can map the elements of the set to the natural numbers taking the position of the element in the ordering. For the natural ordering of the vowels, <span class="math inline">\(\pi_{NAT}\)</span>, we have that</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Vowel</th>
+<th align="left">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">e</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">i</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">o</td>
+<td align="left">4</td>
+</tr>
+<tr class="odd">
+<td align="left">u</td>
+<td align="left">5</td>
+</tr>
+</tbody>
+</table>
+<p>and with the other ordering <span class="math inline">\(\pi_X\)</span> the vowels map to</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Vowel</th>
+<th align="left">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">5</td>
+</tr>
+<tr class="even">
+<td align="left">e</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">i</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">o</td>
+<td align="left">1</td>
+</tr>
+<tr class="odd">
+<td align="left">u</td>
+<td align="left">4</td>
+</tr>
+</tbody>
+</table>
+<p>Table:</p>
+<p>Thus given an ordering, if we apply it to a subset of the universe of objects we get their positions in the new ordering. For instance: <span class="math display">\[\pi_X(\{e,i,o\})=\{2,3,1\}\]</span></p>
+<p>So going back to the original formula, <strong>the probability</strong> that the minimal value of the transformation of each set, say <span class="math inline">\(A=\{e,i,o\}\)</span> and <span class="math inline">\(B=\{a,e\}\)</span>, according to a new orderding, <span class="math inline">\(\pi_X\)</span>, is equal to the Jackard Coefficient. In this case we can compute the Jackard Coefficient exactly and it is: <span class="math display">\[\frac{|\{e,i,o\}\cap\{a,e\}|}{|\{e,i,o\}\cup\{a,e\}|} =\frac{|\{e\}|}{|\{a,e,i,o\}|} = \frac{1}{4} \]</span></p>
+<p>This number means that whenever we pick a transformation <span class="math inline">\(\pi\)</span> from the set of all possible transformations <span class="math inline">\(\Pi\)</span> the probability that the smaller number is the same in both sets is equal to 0.25. Think that we are talking here about a probability and that it <strong>is not</strong> a rule. If the permutation choosen at random was the previously defined function <span class="math inline">\(\pi_X\)</span> then we would have, <span class="math inline">\(\min\pi_X(A)=\min\{2,3,1\}=1\)</span> that is not the same value as <span class="math inline">\(\min\pi_X(B)=\min\{5,2\}=2\)</span>.</p>
+<h3 id="hashing-functions">Hashing functions</h3>
+<p>Defining a random ordering for all the elements of a universe is costly. We have to maintain in memory the tables we saw for the vowels and that can not be practical when the universe of objects is large. So instead of maintaining the explicit random permutation we use the implicit permutation that hashing functions with good properties give us. The good properties we need is that the probability of collision in the universe is low because a random permutation is a 1 to 1 relationship between elements and positions and thus collisions in the hashing function would break this property.</p>
+<p>From now on, I’m going to assume that every universe we need to work with is smaller than the range of integers and thus restrict all the derivations to integer since every set and ordering could be mapped to the natural integer ordering (<span class="math inline">\([0..2^{32}]\)</span>).</p>
+<p>Possible hashing functions for integers could be:</p>
+<ul>
+<li><p>Use the <a href="http://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function">FNV-1</a> hashing function of the string representation of your integer. This has the advantage that naturally deals with hashing sets of integers by means of concatenating their string  representations.</p></li>
+<li><p>Use a pseudo-random number generator by picking a large prime number, say <span class="math inline">\(p=2147483647\)</span> and a set of coefficients <span class="math inline">\(\{a_i,b_i\}\)</span> such our hashing functions are defined as <span class="math inline">\(\pi_{i} = (a_i x + b_i) \% p\)</span></p></li>
+</ul>
+<p>In this post we will use the second kind of functions expresed in this Haskell code:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">p ::</span> <span class="dt">Int</span>
+p<span class="fu">=</span><span class="dv">2147483647</span> 
+
+<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
+coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
+
+<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
+hashFuncs <span class="fu">=</span> go coefs
+  <span class="kw">where</span>
+    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
+                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest </code></pre></div>
+<p>So, given a hashing function, which is the minimum hash over a given set? This code gives you that result</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
+minHash f <span class="fu">=</span> foldl&#39; hashAndMin maxBound
+  <span class="kw">where</span>
+    hashAndMin a b <span class="fu">=</span> min a (f b)</code></pre></div>
+<h3 id="shingles">Shingles</h3>
+<p>OK, now you want to compare two sets, <em>A</em> and <em>B</em> to see how similar they are. The similarity measure here will be the number of items they both share, the Jackard coefficient. The time complexity of the set intersection is <span class="math inline">\(O(n+m)\)</span> if you first build a Hash Map and then query it with the second set for existence. If both sets are already sorted you can compare them in <span class="math inline">\(O(n)\)</span> <span class="math inline">\(O(m+n\log n+ m\log m)\)</span>.</p>
+<p>Can you compare them faster? Yes, but only if you want to trade accuracy. The property in the probability formula at the beginning of the post states that with probability the Jackard coefficient the min hashes of the two sets will be equal. That means that if we take <em>r</em> different hashing functions (permutations) and we name <em>s</em> the Jackard coefficient between the tow sets, the probability that all <em>k</em> hashes of each set are equal is <span class="math inline">\(s^r\)</span>. Since this is a collection of Bernoulli trials, the distribution of having <em>k</em> min hashes equal in both sets follows a Binomial distribution with density probability function equal to:</p>
+<p><span class="math display">\[f(k;r,s)= {r \choose k}s^k(1-s)^{r-k}\]</span></p>
+<p>It is known that a random variable distributed according to the binomial distribution, <span class="math inline">\(X \sim B(r,s)\)</span> has <span class="math inline">\(E[X]=rs\)</span>, so a good estimator of <span class="math inline">\(s\)</span> would be to divide the number of matches by the number of hashing functions. This would give you the estimated value of the Jackard coefficient. But before comparing two fingerprints we have to compute them:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
+shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]</code></pre></div>
+<p>The shingle function gives us a set of <em>c</em> fingerprints of our original big set of numbers.</p>
+<p>So let’s see it in action. Imagine that we want to compute the Jackard coefficient between the bag of letters in the phrase <em>Humpty Dumpty sat on a wall</em> and <em>Humpty Dumpty had a great fall</em>. First let’s compute the Jackard coefficient according to the definition</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Data.List</span>
+<span class="kw">import </span><span class="dt">System.Random</span>
+<span class="kw">import </span><span class="dt">Data.Char</span>
+<span class="kw">import </span><span class="dt">Data.List</span>
+
+phrase1<span class="fu">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span>
+phrase2<span class="fu">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span>
+mkSet <span class="fu">=</span> nub <span class="fu">.</span> filter isAlpha <span class="fu">.</span> map toLower
+<span class="co">-- Set 1 is the collection of letters in the first phrase</span>
+<span class="co">-- &quot;humptydsaonw&quot;</span>
+set1 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span>
+<span class="co">-- Set 2 is the collection of letters in the second phrase</span>
+<span class="co">-- &quot;humptydagrefl&quot;</span>
+set2 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span>
+           
+jackard <span class="fu">=</span> a<span class="fu">/</span>b
+  <span class="kw">where</span>
+    a <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
+    b <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
+    
+<span class="ot">p ::</span> <span class="dt">Int</span>
+p<span class="fu">=</span><span class="dv">2147483647</span> 
+
+<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
+coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
+
+<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
+hashFuncs <span class="fu">=</span> go coefs
+  <span class="kw">where</span>
+    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
+                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest 
+
+<span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
+minHash f <span class="fu">=</span> foldl&#39; hashAndMin maxBound
+  <span class="kw">where</span>
+    hashAndMin a b <span class="fu">=</span> min a (f b)
+
+<span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
+shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]
+
+shingles1 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="fu">..</span>]
+shingles2 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="fu">..</span>]
+
+jackard2 <span class="fu">=</span> map approxJackard shingles
+  <span class="kw">where</span> 
+    shingles <span class="fu">=</span> zip shingles1 shingles2
+<span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span>
+    approxJackard (as,bs) <span class="fu">=</span> <span class="kw">let</span> pairs <span class="fu">=</span> zip as bs
+                                matches <span class="fu">=</span> filter (\(a,b) <span class="ot">-&gt;</span> a <span class="fu">==</span> b) pairs
+                                num <span class="fu">=</span> fromIntegral <span class="fu">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span>
+                                den <span class="fu">=</span> fromIntegral <span class="fu">$</span> length<span class="ot"> as ::</span> <span class="dt">Double</span>
+                            <span class="kw">in</span> num<span class="fu">/</span>den</code></pre></div>
+<p>If we plot <em>jackard2</em> we have an approximation based on the number of shingles:</p>
+<div class="figure">
+<img src="ApproxJackard.png" />
+
+</div>
+<h3 id="lost">Lost?</h3>
+<p>OK, let me summarize a little bit.</p>
+<ol style="list-style-type: decimal">
+<li>You came here because you have a problem of comparing and object against N different objects and N is very large. </li>
+<li>The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.</li>
+<li>You want a cheap procedure for computing 2)</li>
+</ol>
+<p>So the solution is to transform each object into a set of _c _different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
+<p>Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number <em>c</em>. But we still have to perform N comparisons against the N individuals in the population. Wouldn’t it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That’s possible with the use of <strong>bands</strong> but since this post is already very long, I’ll leave that for another post.</p>
+<h4 id="references">References</h4>
+<ol style="list-style-type: decimal">
+<li><p><a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.8215">Minwise independent permutations</a> The paper with the math that demonstrates the link between the Jackard Coefficient and the probability.</p></li>
+<li><p><a href="http://infolab.stanford.edu/~ullman/mmds.html">Chapter 3</a> of the excellent book “Minning massive datasets”</p></li>
+</ol>
+]]></description>
+    <pubDate>Mon, 11 Mar 2013 10:00:55 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2013/03/11/introduction-to-the-minhash-algorithm.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Training Gradient Boosting Trees with Python</title>
+    <link>http://www.tonicebrian.com/posts/2012/11/05/training-gradient-boosting-trees-with-python.html</link>
+    <description><![CDATA[<div class="info">Posted on November  5, 2012</div>
+
+<p>I’ve been doing some data mining lately and specially looking into <a href="http://en.wikipedia.org/wiki/Gradient_boosting">Gradient Boosting Trees</a> since it is claimed that this is one of the techniques with best performance out of the box. In order to have a better understanding of the technique I’ve reproduced the example of section 10.14.1 California Housing in the book <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn">The Elements of Statistical Learning</a>. Each point of this dataset represents the house value of a property with some attributes of that house. You can get the data and the description of those attributes from <a href="http://lib.stat.cmu.edu/modules.php?op=modload&amp;name=Downloads&amp;file=index&amp;req=getit&amp;lid=83">here</a>.</p>
+<p>I know that the whole exercise here can be easily done with the R package <a href="http://cran.r-project.org/web/packages/gbm/index.html">gbm</a> but I wanted to do the exercise using Python. Since learning several languages well enough is difficult and time consuming I would prefer to stick all my data analysis to Python instead doing it in R, even with R being superior on some cases. But having only one language for doing all your scripting, systems programming and prototyping PLUS your data analysis is a good reason for me. Your upfront effort of learning the language, setting up your tools and editors, etc. is done only once instead of twice.</p>
+<h2 id="data-preparation-and-model-fitting">Data Preparation and Model Fitting</h2>
+<p>The first thing to do is to load the data into a <a href="http://pandas.pydata.org/pandas-docs/stable">Pandas</a> dataframe</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> numpy <span class="im">as</span> np
+<span class="im">import</span> pandas <span class="im">as</span> pd
+
+columnNames <span class="op">=</span> [<span class="st">&#39;HouseVal&#39;</span>,<span class="st">&#39;MedInc&#39;</span>,<span class="st">&#39;HouseAge&#39;</span>,<span class="st">&#39;AveRooms&#39;</span>,
+               <span class="co">&#39;AveBedrms&#39;</span>,<span class="st">&#39;Population&#39;</span>,<span class="st">&#39;AveOccup&#39;</span>,<span class="st">&#39;Latitude&#39;</span>,<span class="st">&#39;Longitud&#39;</span>]
+
+df <span class="op">=</span> pd.read_csv(<span class="st">&#39;cadata.txt&#39;</span>,skiprows<span class="op">=</span><span class="dv">27</span>, sep<span class="op">=</span><span class="st">&#39;\s+&#39;</span>,names<span class="op">=</span>columnNames)</code></pre></div>
+<p>Now we have to split the datasets into training and validation. The training data will be used to generate the trees that will constitute the final averaged model.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> random
+
+X <span class="op">=</span> df[df.columns <span class="op">-</span> [<span class="st">&#39;HouseVal&#39;</span>]]
+Y <span class="op">=</span> df[<span class="st">&#39;HouseVal&#39;</span>]
+rows <span class="op">=</span> random.sample(df.index, <span class="bu">int</span>(<span class="bu">len</span>(df)<span class="op">*</span>.<span class="dv">80</span>))
+x_train, y_train <span class="op">=</span> X.ix[rows],Y.ix[rows]
+x_test,y_test  <span class="op">=</span> X.drop(rows),Y.drop(rows)</code></pre></div>
+<p>We then fit a Gradient Tree Boosting model to the data using the <a href="http://scikit-learn.org/stable/">scikit-learn</a> package. We will use 500 trees with each tree having a depth of 6 levels. In order to get results similar to those in the book we also use the <a href="http://en.wikipedia.org/wiki/Huber_loss_function">Huber loss function</a>.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error,r2_score
+<span class="im">from</span> sklearn.ensemble <span class="im">import</span> GradientBoostingRegressor
+params <span class="op">=</span> {<span class="st">&#39;n_estimators&#39;</span>: <span class="dv">500</span>, <span class="st">&#39;max_depth&#39;</span>: <span class="dv">6</span>,
+        <span class="co">&#39;learn_rate&#39;</span>: <span class="fl">0.1</span>, <span class="st">&#39;loss&#39;</span>: <span class="st">&#39;huber&#39;</span>,<span class="st">&#39;alpha&#39;</span>:<span class="fl">0.95</span>}
+clf <span class="op">=</span> GradientBoostingRegressor(<span class="op">**</span>params).fit(x_train, y_train)</code></pre></div>
+<p>For me, the Mean Squared Error wasn’t much informative and used instead the R2 coefficient of determination. This measure is a number indicating how well a variable is able to predict the other. Values close to 0 means poor prediction and values close to 1 means perfect prediction. In the book, they claim a 0.84 against a 0.86 reported in the paper that created the dataset using a highly tuned algorithm. I’m getting a good 0.83 without much tunning of the parameters so it’s a good out of the box technique.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">mse <span class="op">=</span> mean_squared_error(y_test, clf.predict(x_test))
+r2 <span class="op">=</span> r2_score(y_test, clf.predict(x_test))
+
+<span class="bu">print</span>(<span class="st">&quot;MSE: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> mse)
+<span class="bu">print</span>(<span class="st">&quot;R2: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> r2)</code></pre></div>
+<h2 id="data-analysis">Data Analysis</h2>
+<p>Let’s plot how does the training and testing error behave</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt
+
+<span class="co"># compute test set deviance</span>
+test_score <span class="op">=</span> np.zeros((params[<span class="st">&#39;n_estimators&#39;</span>],), dtype<span class="op">=</span>np.float64)
+
+<span class="cf">for</span> i, y_pred <span class="op">in</span> <span class="bu">enumerate</span>(clf.staged_decision_function(x_test)):
+    test_score[i] <span class="op">=</span> clf.loss_(y_test, y_pred)
+
+plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
+plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
+plt.title(<span class="st">&#39;Deviance&#39;</span>)
+plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, clf.train_score_, <span class="st">&#39;b-&#39;</span>,
+                label<span class="op">=</span><span class="st">&#39;Training Set Deviance&#39;</span>)
+plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, test_score, <span class="st">&#39;r-&#39;</span>,
+                label<span class="op">=</span><span class="st">&#39;Test Set Deviance&#39;</span>)
+plt.legend(loc<span class="op">=</span><span class="st">&#39;upper right&#39;</span>)
+plt.xlabel(<span class="st">&#39;Boosting Iterations&#39;</span>)
+plt.ylabel(<span class="st">&#39;Deviance&#39;</span>)</code></pre></div>
+<p><img src="Errors.png" />]</p>
+<p>As you can see in the previous graph, although the train error keeps going down as we add more trees to our model, the test error remains more or less constant and doesn’t incur in overfitting. This is mainly due to the shrinkage parameter and one of the good features of this algorithm.</p>
+<p>When doing data mining as important as finding a good model is being able to interpret it, because based on that analysis and interpretation preemptive actions can be performed. Although base trees are easily interpretable when you are adding several of those trees interpretation is more difficult. You usually rely on some measures of the predictive power of each feature. Let’s plot feature importance in predicting the House Value.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">feature_importance <span class="op">=</span> clf.feature_importances_
+<span class="co"># make importances relative to max importance</span>
+feature_importance <span class="op">=</span> <span class="fl">100.0</span> <span class="op">*</span> (feature_importance <span class="op">/</span> feature_importance.<span class="bu">max</span>())
+sorted_idx <span class="op">=</span> np.argsort(feature_importance)
+pos <span class="op">=</span> np.arange(sorted_idx.shape[<span class="dv">0</span>]) <span class="op">+</span> .<span class="dv">5</span>
+plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
+plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
+plt.barh(pos, feature_importance[sorted_idx], align<span class="op">=</span><span class="st">&#39;center&#39;</span>)
+plt.yticks(pos, X.columns[sorted_idx])
+plt.xlabel(<span class="st">&#39;Relative Importance&#39;</span>)
+plt.title(<span class="st">&#39;Variable Importance&#39;</span>)
+plt.show()</code></pre></div>
+<div class="figure">
+<img src="RelativeImportance.png" />
+
+</div>
+<p>Once variable importance has been identified we could try to investigate how those variables interact between them. For instance, we can plot the dependence of the target variable with another variable has been averaged over the values of the other variables not being taken into consideration. Some variables present a clear monotonic dependence with the target value, while others seem not very related to the target variable even when they ranked high in the previous plot. This could be signaling an interaction between variables that could be further studied.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.ensemble.partial_dependence <span class="im">import</span> plot_partial_dependence
+
+fig, axs <span class="op">=</span> plot_partial_dependence(clf, x_train,
+                                   features<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">6</span>],
+                                   feature_names<span class="op">=</span>x_train.columns,
+                                   n_cols<span class="op">=</span><span class="dv">2</span>)
+
+fig.show()</code></pre></div>
+<div class="figure">
+<img src="panel.png" alt="Partial Dependence" />
+<p class="caption">Partial Dependence</p>
+</div>
+<p>The last step performed was to explore the capabilities of the Python libraries when plotting data in a map. Here we are plotting the predicted House Value in California using Latitude and Longitude as the axis for plotting this data in the map.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> mpl_toolkits.basemap <span class="im">import</span> Basemap
+predDf <span class="op">=</span> pd.DataFrame(x_test.copy())
+predDf[<span class="st">&#39;y_pred&#39;</span>] <span class="op">=</span> clf.predict(x_test)
+
+<span class="kw">def</span> california_map(ax<span class="op">=</span><span class="va">None</span>, lllat<span class="op">=</span><span class="fl">31.5</span>,urlat<span class="op">=</span><span class="fl">42.5</span>,
+                   lllon<span class="op">=-</span><span class="dv">124</span>,urlon<span class="op">=-</span><span class="dv">113</span>):
+    m <span class="op">=</span> Basemap(ax<span class="op">=</span>ax, projection<span class="op">=</span><span class="st">&#39;stere&#39;</span>,
+                lon_0<span class="op">=</span>(urlon <span class="op">+</span> lllon) <span class="op">/</span> <span class="dv">2</span>,
+                lat_0<span class="op">=</span>(urlat <span class="op">+</span> lllat) <span class="op">/</span> <span class="dv">2</span>,
+                llcrnrlat<span class="op">=</span>lllat, urcrnrlat<span class="op">=</span>urlat,
+                llcrnrlon<span class="op">=</span>lllon, urcrnrlon<span class="op">=</span>urlon,
+                resolution<span class="op">=</span><span class="st">&#39;f&#39;</span>)
+    m.drawstates()
+    m.drawcountries()
+    m.drawcoastlines(color<span class="op">=</span><span class="st">&#39;lightblue&#39;</span>)
+    <span class="cf">return</span> m
+
+plt.figure()
+m<span class="op">=</span> california_map()
+predDf <span class="op">=</span> predDf.sort(<span class="st">&#39;y_pred&#39;</span>) <span class="co"># Useful for plotting</span>
+x,y <span class="op">=</span> m(predDf[<span class="st">&#39;Longitud&#39;</span>],predDf[<span class="st">&#39;Latitude&#39;</span>])
+serieA <span class="op">=</span> (np.array(predDf[<span class="st">&#39;y_pred&#39;</span>]) <span class="op">-</span> predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())<span class="op">/</span>(predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">max</span>()<span class="op">-</span>predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())
+<span class="co"># z = plt.cm.jet(serieA)</span>
+z <span class="op">=</span> np.array(predDf[<span class="st">&#39;y_pred&#39;</span>])<span class="op">/</span><span class="dv">1000</span>
+m.scatter(x,y,c<span class="op">=</span>z,s<span class="op">=</span><span class="dv">60</span>,alpha<span class="op">=</span><span class="fl">0.5</span>,edgecolors<span class="op">=</span><span class="st">&#39;none&#39;</span>)
+c <span class="op">=</span> m.colorbar(location<span class="op">=</span><span class="st">&#39;right&#39;</span>)
+c.set_label(<span class="st">&quot;House Value (Thousands of $)&quot;</span>)
+m.plot()
+plt.show()</code></pre></div>
+<div class="figure">
+<img src="California.png" />
+
+</div>
+<h2 id="addendum">Addendum</h2>
+<p>This blog post was written using <a href="http://pylit.berlios.de">Pylit</a> as the tool for doing <a href="http://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>. The code can be seen <a href="https://gist.github.com/4018084">here</a>. I think that literate programming is way superior to other software methodologies like TDD when coding algorithms for data analysis. The main problem I find right now is the lack of proper tooling for really taking advantage of literate programming, but this is a technique that I’m definitely going to research deeper.</p>
+]]></description>
+    <pubDate>Mon, 05 Nov 2012 19:26:55 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2012/11/05/training-gradient-boosting-trees-with-python.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Thread pool in C++</title>
+    <link>http://www.tonicebrian.com/posts/2012/05/23/thread-pool-in-c.html</link>
+    <description><![CDATA[<div class="info">Posted on May 23, 2012</div>
+
+<div class="figure">
+<img src="BoostLogo.png" />
+
+</div>
+<p>I needed to convert user ids spread across a lot of files into a fixed range [0..N] where N was the total number of Ids in the dataset. First I though that since those files came from a Hadoop cluster I should write a MR job to do the task. But since recoding ids needs a “central authority” giving unique ids without collision, MapReduce wasn’t an option because MR thinks about each record as independent of the rest of records, so coordinating the assignment of ids is both difficult and unnatural in MapReduce. The naïve approach is to create a counter, loop through all the ids and whenever an id is not in the dictionary, use the counter as the new translation. See the pseudocode</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="bu">int</span> counter <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>
+<span class="cf">for</span> <span class="bu">id</span> <span class="op">in</span> ids:
+    <span class="cf">if</span> <span class="bu">id</span> <span class="op">not</span> <span class="op">in</span> <span class="bu">dict</span>:
+        <span class="bu">dict</span>[<span class="bu">id</span>] <span class="op">=</span> counter
+        counter<span class="op">++</span>
+    <span class="bu">print</span> <span class="bu">dict</span>[i]</code></pre></div>
+<p>But then you are wasting precious cores that could help you. My machine has eight cores, so for a task that runs in aprox 60 minutes, so after investing time in going beyond the naïve approach, I’m able to lower it to 10 minutes. That means that I can run tests 6 times faster, it will pay off.</p>
+<h3 id="lookup-table">Lookup table</h3>
+<p>So the first thing to do is to create a thread safe Hash Map. Most of the time the access will be for reading a value and less frequently for updating the data structure (in my problem I perform 250 reads for each write) so this scenario is ideal for a <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers-writer lock</a>. I use the Boost Thread library with its boost::shared_mutex for getting the multiple access functionality. The class is something like this</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">using</span> <span class="kw">namespace</span> boost;
+<span class="kw">class</span> LookupTable {
+    <span class="kw">private</span>:
+        <span class="kw">typedef</span> std::unordered_map&lt;<span class="dt">int</span>,<span class="dt">unsigned</span> <span class="dt">int</span>&gt; HashMap;
+        HashMap dict;
+        <span class="dt">unsigned</span> <span class="dt">int</span> counter;
+        shared_mutex m_mutex; 
+    <span class="kw">public</span>:
+        LookupTable(){};
+        <span class="dt">unsigned</span> <span class="dt">int</span> translate(<span class="dt">int</span> number){
+            boost::shared_lock&lt;boost::shared_mutex&gt; lck(m_mutex);
+            <span class="dt">unsigned</span> <span class="dt">int</span> result;
+            HashMap::iterator elem = dict.find(key);
+            <span class="kw">if</span>( elem == dict.end()){
+               lck.unlock();
+               boost::upgrade_lock&lt;boost::shared_mutex&gt; uLck(m_mutex);
+               boost::upgrade_to_unique_lock&lt;boost::shared_mutex&gt; uuLck(uLck);
+               dict[key] = counter;
+               result = counter;
+               counter++;
+            } <span class="kw">else</span> {
+               result = elem-&gt;second;
+            }
+            <span class="kw">return</span> result;
+        }
+};</code></pre></div>
+<h3 id="thread-pool">Thread pool</h3>
+<p>Once we have the thread safe data structure in place, we want to create a thread pool were we can send tasks. The thread pool will be responsible to assign each task to the next free thread. The reason for having a thread pool instead of spawning as many threads as tasks is two fold, first, the amount of work I can do is bounded by the speed at which I’m able to read from disk, so throwing more threads doesn’t seem to help here. Second, since all the threads must query the lookup table, if there are lots of them the synchronization (mutex locking and unlocking) could become heavier than the work per thread becoming a bottleneck.</p>
+<p>Boost provides a nice thread pool by using the Boost::Asio library. I came to this pattern of usage by reading <a href="http://mostlycoding.blogspot.com.es/2009/05/asio-library-has-been-immensely-helpful.html">this</a> and <a href="http://think-async.com/Asio/Recipes">this</a> but it happens that they are wrong in a subtle detail. As they are written, they only run one task per thread and then the io_service is stopped. After scratching my head for a couple of hours I reread the official documentation and the solution is explained <a href="http://www.boost.org/doc/libs/1_49_0/doc/html/boost_asio/reference/io_service.html">at them botom of the page</a>. So the key issue is to destroy explicitly the work variable that we created for the io_service to not end too early. To accomplish that just embed the work in a smart pointer std::auto_ptr and reset it when necessary, the reset will call the work destructor.</p>
+<p>So the main program would be something like this</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Thread pool</span>
+asio::io_service io_service;
+boost::thread_group threads;
+auto_ptr&lt;asio::io_service::work&gt; work(<span class="kw">new</span> asio::io_service::work(io_service)); 
+
+<span class="co">// Spawn enough worker threads</span>
+<span class="dt">int</span> cores_number = boost::thread::hardware_concurrency(); 
+<span class="kw">for</span> (std::size_t i = <span class="dv">0</span>; i &lt; cores_number; ++i){
+    threads.create_thread(boost::bind(&amp;asio::io_service::run, &amp;io_service));
+}
+<span class="co">// Post the tasks to the io_service</span>
+<span class="kw">for</span>(vector&lt;string&gt;::iterator it=filenames.begin();it!=filenames.end();it++){
+   io_service.dispatch(std::move(translator(*it,dict)));
+}
+work.reset();</code></pre></div>
+<p>and the code for the worker (sketched)</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> translator {
+    translator(string filename, LookupTable&amp; dict)
+        : m_filename(filename),m_dict(dict)
+    {
+    }
+    <span class="dt">void</span> <span class="kw">operator</span>()(){
+        <span class="co">// DO YOUR WORKER ACTIVITY HERE</span>
+        ...
+        <span class="kw">return</span>;
+    }
+}</code></pre></div>
+]]></description>
+    <pubDate>Wed, 23 May 2012 17:30:07 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2012/05/23/thread-pool-in-c.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Parser combinators in Scala</title>
+    <link>http://www.tonicebrian.com/posts/2012/02/23/parser-combinators-in-scala.html</link>
+    <description><![CDATA[<div class="info">Posted on February 23, 2012</div>
+
+<p>Lately, I’ve been writing some <a href="http://research.yahoo.com/files/ieeecomputer.pdf">matrix factorization</a> code for a video recommender system. I’m a big fan of Test Driven Development but it is a technique that is difficult for me to apply to the numerical or algorithmic domain. In order to make sure that the code I write is correct what I’m doing is the Oracle Test Pattern (I’m sure there is a correct name for this but I’m not able to find it right now). The idea is to have a reference implementation that solves the exact problem you are trying to solve. In my case, that reference implementation does not exists but I’m writing a straightforward unoptimized version of the script in Python using the Numpy libraries. That will be my ground truth when comparing results with the highly optimized parallel Scala version of the algorithm.</p>
+<h3 id="the-problem">The problem</h3>
+<p>So the problem is that I’m working interactively coding the algorithm in an iPython session and I’m getting results of this kind</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">In [<span class="dv">4</span>]: x
+Out[<span class="dv">4</span>]:
+matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span class="fl">0.35836827</span>, <span class="op">-</span><span class="fl">2.06492572</span>,  <span class="fl">1.49773613</span>, <span class="op">-</span><span class="fl">1.01988835</span>,
+         <span class="op">-</span><span class="fl">0.20590096</span>, <span class="op">-</span><span class="fl">0.19658741</span>],
+        [ <span class="fl">0.43055155</span>,  <span class="fl">1.07532444</span>,  <span class="fl">0.89299596</span>, <span class="op">-</span><span class="fl">1.070371</span>  , <span class="op">-</span><span class="fl">0.24015718</span>,
+          <span class="fl">0.04521229</span>, <span class="op">-</span><span class="fl">1.39209522</span>],
+        [<span class="op">-</span><span class="fl">0.4482701</span> ,  <span class="fl">0.15201451</span>, <span class="op">-</span><span class="fl">1.42824771</span>,  <span class="fl">1.13859559</span>,  <span class="fl">0.66432642</span>,
+          <span class="fl">0.51184435</span>,  <span class="fl">0.52637519</span>],
+        [<span class="op">-</span><span class="fl">0.26518471</span>, <span class="op">-</span><span class="fl">1.14331753</span>, <span class="op">-</span><span class="fl">1.15492029</span>, <span class="op">-</span><span class="fl">0.27501194</span>,  <span class="fl">1.73750282</span>,
+         <span class="op">-</span><span class="fl">1.4118682</span> ,  <span class="fl">0.14701005</span>],
+        [<span class="op">-</span><span class="fl">1.6577536</span> , <span class="op">-</span><span class="fl">0.0781593</span> , <span class="op">-</span><span class="fl">0.01558478</span>,  <span class="fl">0.67277257</span>, <span class="op">-</span><span class="fl">0.07249647</span>,
+          <span class="fl">0.70946581</span>, <span class="op">-</span><span class="fl">0.82349608</span>]])</code></pre></div>
+<p>and I would like to just copy and paste this string and use it as the expected value in my Scala tests. That would involve to remove “matrix”, all the “[&quot; and “]”, substitute them for their Array() equivalents and put an <strong>F</strong> at the end of each number denoting that it is a Float. Too much work.</p>
+<h3 id="the-solution">The solution</h3>
+<p>If there is an area where functional languages shine is in creating DSLs. More specifically creating an <a href="http://martinfowler.com/bliki/InternalDslStyle.html">internal DSL</a> that looks more like an <a href="http://martinfowler.com/bliki/DomainSpecificLanguage.html">external DSL</a>. In Scala you can use the <a href="http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html">Parser Combinator libraries</a> that are part of the Scala’s core libraries. Such parser will be something like</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">class</span> PyMatrixParser <span class="kw">extends</span> JavaTokenParsers {
+  <span class="kw">def</span> matrix:Parser[Array[Array[Float]]] = <span class="st">&quot;matrix([&quot;</span> ~&gt; <span class="fu">repsep</span>(row,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;])&quot;</span> ^^ (_.<span class="fu">toArray</span>)
+  <span class="kw">def</span> row:Parser[Array[Float]] = <span class="st">&quot;[&quot;</span>~&gt; <span class="fu">repsep</span>(floatingPointNumber,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;]&quot;</span> ^^ (_.<span class="fu">map</span>(_.<span class="fu">toFloat</span>).<span class="fu">toArray</span>)
+}</code></pre></div>
+<p>using this parser is then just a matter of</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> parser = <span class="kw">new</span> PyMatrixParser
+<span class="kw">val</span> scalaMatrix = parser.<span class="fu">parseAll</span>(parser.<span class="fu">matrix</span>, theStringMatrix).<span class="fu">get</span></code></pre></div>
+<p>quite good result for just 2 lines of code defining the parser.</p>
+<p>This is the quick overview for those not familiar with Scala’s syntax</p>
+<ul>
+<li><p>Every String that is found where a Scala Parser was meant to be, is automatically transformed into a constant parser that matches that exact string. So for instance,_“matrix([”_gets converted into a parser by one of the implicits in the parser combinators libraries.</p></li>
+<li><p><em>rep(row,“,”)</em> takes two parsers as parameters and means that parser #1 will be repeated 0 or more times interleaved by parser #2</p></li>
+<li><p>The parser combinators_ “~&gt;”_ and <em>“&lt;~”</em> denote that the parser pointed by the arrow must be keep as the result of the parsing while the parser pointed by the tail must be discarded. This is helpful for combining two parser where one of them is just ornamental.</p></li>
+<li><p>floatingPointNumber is a parser provided by the library that parses float point string representations</p></li>
+<li><p>Each parser returns either the parsed string or a more complex Scala structure, like for instance, a list of strings in the case of <em>rep(parser1,parser2)</em>. Those results are sent to a parser transformator (the_ ^^_ operator) that works on the parser results and generates the true parsing result. In the example, first we create an array of Floats, and then an Array of Arrays of Floats that represent my matrix.</p></li>
+</ul>
+<p>Really cool feature that has spared me a lot of grunt work by just writing two lines of code.</p>
+]]></description>
+    <pubDate>Thu, 23 Feb 2012 10:59:19 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2012/02/23/parser-combinators-in-scala.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>CSV parser in C++ with Boost and Template Metaprogramming</title>
+    <link>http://www.tonicebrian.com/posts/2011/12/28/csv-parser-in-c-with-boost-and-template-metaprogramming.html</link>
+    <description><![CDATA[<div class="info">Posted on December 28, 2011</div>
+
+<p>One common situation when analyzing big chunks of data is to parse big CSV files with a record structure on each line. That is, all lines conform to a fixed schema where each line represents a record and each record has several columns of different types. Your objective is to parse and fill a data structure like this</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> foo {
+    <span class="dt">int</span> a;
+    std::string b;
+    <span class="dt">double</span> c;
+};</code></pre></div>
+<p>for each record. All the information needed for such parsing is in this data structure so I wondered whether I could write a program when you pass that type information and the parsing is done automatically for you. This is my first attempt at getting a flexible and fast CSV parser in C++. It is hosted in <a href="https://github.com/tonicebrian/csv_iterator">Github</a>.</p>
+<h2 id="design">Design</h2>
+<p>When parsing CSV files the common usage pattern is to iterate through each line and perform a given action on each record. No need for a big CSV container or something similar, so the best approach is to write a class that acts as an iterator. When derreferencing the iterator it will return the provided data structure filled with parsed data from the current line.</p>
+<p>An iterator is associated to a container but in this case, it will be constructed accepting an <em>std::istream</em> representing the CSV file. By accepting this istream we will be able to parse strings using the <em>std::stringstream</em> class, regular files, or compressed files using the <a href="http://www.boost.org/doc/libs/1_48_0/libs/iostreams/doc/index.html">Boost Iostream library</a>.</p>
+<p>The iterator must have all the common operators for it to interoperate with the STL algorithms seamlessly. The empty constructor will mark the iterator’s end-of-range position that coincides with the end of file. A typical use case will be to have some code like this:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;fstream&gt;</span>
+<span class="ot">#include &lt;boost/tuple/tuple.hpp&gt;</span>
+<span class="ot">#include &lt;csv_iterator.hpp&gt;</span>
+
+<span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
+<span class="kw">typedef</span> tuple&lt;<span class="dt">int</span>,std::string,<span class="dt">double</span>&gt; record;
+
+<span class="dt">void</span> myFunc(<span class="dt">const</span> record&amp; value){
+    <span class="co">// Your code here</span>
+}
+
+<span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">const</span> <span class="dt">char</span> *argv[])
+{
+    <span class="co">// Example of csv_iterator usage</span>
+    std::ifstream in(<span class="st">&quot;myCsvFile.csv&quot;</span>);
+    csv::iterator&lt;record&gt; it(in);
+
+    <span class="co">// Use the iterator in your algorithms.</span>
+    std::for_each(it, csv::iterator&lt;record&gt;(), myFunc);
+
+    <span class="kw">return</span> <span class="dv">0</span>;
+}</code></pre></div>
+<p>for parsing CSV files like this:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">1</span>,hola,3.14
+<span class="kw">2</span>,adios,2.71</code></pre></div>
+<h2 id="implementation">Implementation</h2>
+<p>For obtaining the values on each line, the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/libs/tokenizer/index.html">Boost Tokenizer library</a>. From a string you create a tokenizer that splits the input string by the character delimiter that by default is the comma. It also takes care of escaping characters. Accessing the different tokens is granted by the tokenizer by providing a token iterator.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">using</span> <span class="kw">namespace</span> boost;
+<span class="kw">typedef</span> tokenizer&lt;escaped_list_separator&lt;<span class="dt">char</span>&gt; &gt; Tokens;
+Tokens tokens(currentLine);
+<span class="co">// Tokens can be accessed using tokens.begin() and tokens.end() iterators</span></code></pre></div>
+<p>Once we have the strings representing different values we have to parse and convert them into a type. Bad data format exceptions happen here and can be spotted earlier. For parsing using an unified approach the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/doc/html/boost_lexical_cast.html">Boost Lexical Cast Library</a>. This library provides a uniform and portable interface for doing text conversions</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">int</span> myInt = boost::lexical_cast&lt;<span class="dt">int</span>&gt;(<span class="st">&quot;5&quot;</span>);
+<span class="dt">double</span> myDouble = boost::lexical_cast&lt;<span class="dt">double</span>&gt;(<span class="st">&quot;3.14&quot;</span>);</code></pre></div>
+<p>For the record data structure the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/libs/tuple/doc/tuple_users_guide.html">Boost Tuple Library</a> that provides a Plain “old” Data Structure for storing the record fields. Moreover this class provides some template infrastructure that helps in the metaprogramming trick that follows.</p>
+<h3 id="template-metaprogamming">Template metaprogamming</h3>
+<p>For our library the number of columns and the datatype is implicit in the record type. Our algorithm for parsing is basic, depending on the field type, parse the Nth string accordingly, and assign the result to the Nth field. Repeat for all the record fields. This <a href="http://en.wikipedia.org/wiki/Polymorphism_(computer_science)#Parametric_polymorphism">parametric polymorphism</a> must be combined with the dynamic access of the string tokenization. The former can be obtained in C++ using <a href="http://en.wikipedia.org/wiki/Template_metaprogramming">Template metaprogramming</a>. The code that makes the trick is this one</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span>&lt;<span class="kw">class</span> Tuple, <span class="dt">int</span> N &gt;
+    <span class="kw">struct</span> helper {
+        <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){
+            <span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
+            <span class="kw">typedef</span> <span class="kw">typename</span> element&lt;length&lt;Tuple&gt;::value-N<span class="dv">-1</span>,Tuple&gt;::type value_type;
+            checkIteratorRange(it,end);
+            get&lt;length&lt;Tuple&gt;::value-N<span class="dv">-1</span>&gt;(tuple) = boost::lexical_cast&lt;value_type&gt;(it-&gt;c_str());
+            ++it;
+            helper&lt;Tuple,N<span class="dv">-1</span>&gt;::fill(tuple,it,end);
+        }
+    };
+
+<span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;
+    <span class="kw">struct</span> helper&lt;Tuple, <span class="dv">0</span>&gt; {
+        <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){
+            <span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
+            <span class="kw">typedef</span> <span class="kw">typename</span> boost::tuples::element&lt;length&lt;Tuple&gt;::value<span class="dv">-1</span>,Tuple&gt;::type value_type;
+            checkIteratorRange(it,end);
+            boost::tuples::get&lt;length&lt;Tuple&gt;::value<span class="dv">-1</span>&gt;(tuple) = boost::lexical_cast&lt;value_type&gt;(it-&gt;c_str());
+            ++it;
+        };
+    };
+
+<span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;
+    <span class="kw">struct</span> filler {
+       <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp;&amp; it,strIt&amp;&amp; end){
+            checkIteratorRange(it,end);
+            helper&lt;Tuple, boost::tuples::length&lt;Tuple&gt;::value<span class="dv">-1</span>&gt;::fill(tuple,it,end);
+        }
+    };</code></pre></div>
+<p>Yes, C++ syntax sucks!! But basically what we are doing here is a common pattern of functional programming, <a href="http://en.wikipedia.org/wiki/Tail_call">tail recursion</a>. We define structures that contain static functions. The <strong>filler</strong> structure just initializes the recursive call by instantiating an instance of the <strong>helper</strong> paremeterized structure setting the length recursion to the number of fields in the tuple. This structure has to be specialized for the 0 value in order for the recursion to stop. All this functionality is done behind the curtain by the compiler (compilation time increases when using template metaprogramming) but the generated code will be something very similar to this pseudocode:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">boost::tuples::get&lt;<span class="dv">0</span>&gt;(tuple) = (casting_here)*it; 
+++it;
+boost::tuples::get&lt;<span class="dv">1</span>&gt;(tuple) = (casting_here)*it; 
+++it;
+boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it; 
+++it;</code></pre></div>
+<p>almost identical to the code we would have written by hand. The compiler is the one who knows how many fields our structure has at compile time and generates as many efficient instructions as needed.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I wanted to stretch my programming muscles by coding a generic, flexible and fast CSV parser in C++ using template metaprogramming. The generic and flexible parts of the task have been accomplished but not the performance objectives. Although the library is fast enough for most tasks, it isn’t in a scenario of Big Data parsing big files. The tokenizer iterator is incurring a performance penalty each time I try to derreference it, since it creates and allocates memory for a <em>std::string</em> each time we invoke _*it_. This memory allocation is a performance drain doing useless work because we need this information only for parsing and getting a value, but the string is discarded thereafter. It would be better to perform an in-place parsing using the string allocated when reading the lines of the file. To that end it will be enlightening in the future to try this same exercise with more performant string libraries like the <a href="http://www.partow.net/programming/strtk/index.html">C++ String Toolkit</a> and see the differences in performance.</p>
+]]></description>
+    <pubDate>Wed, 28 Dec 2011 18:00:03 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2011/12/28/csv-parser-in-c-with-boost-and-template-metaprogramming.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Implementing LDA</title>
+    <link>http://www.tonicebrian.com/posts/2011/11/28/implementing-lda.html</link>
+    <description><![CDATA[<div class="info">Posted on November 28, 2011</div>
+
+<p>Lately I was playing with Latent Dirichlet Allocation (<a href="http://en.wikipedia.org/wiki/Latent_Dirichlet_allocation">LDA</a>) for a project at work. If for whatever reason you need to implement such algorithm perhaps you will save some time reading the walkthrough I did.</p>
+<p>First you must be sure that LDA is the algorithm you are looking for. From a corpus of documents you will get K lists with words from your documents in them with a number assigned to each word denoting the relevance of the given word in the lists. Each list represents a topic, and that would be your topic description, no fancy words like “Computers”, “Biology” or “Life meaning”, just a set of words that a human must interpret. You could always assign a single name by picking the most prominent word in the list or treating the list as a valued vector and comparing it against a <em>canonical topic description</em>. So take a look at the first examples in <a href="http://www.cs.princeton.edu/~blei/kdd-tutorial.pdf">this presentation</a> and get inspired.<img src="http://upload.wikimedia.org/wikipedia/commons/4/4d/Smoothed_LDA.png" /></p>
+<p>OK so you need some code to test how this method behaves with your particular data. The first thing to try is the <a href="http://cran.r-project.org/web/packages/topicmodels/index.html">topicmodels</a> package from the <a href="http://www.r-project.org/">R</a>   statistical software package. This can give you an idea of the method and try to use it in a more serious Java application by means of the <a href="http://mallet.cs.umass.edu/">Mallet library</a>.</p>
+<p>But say that you need to create your own implementation because Java horrifies you or because you need a parallel version or whatever the reason. The first thing you have to do is to choose the inference method of your model between <strong>variational methods</strong> or <strong>gibbs sampling</strong>.<a href="http://www.phontron.com/blog/?p=24">This post</a> will give you some ideas for picking the right method for your particular problem. The original papers picked the variational approach but I went through the Gibbs sampling method because I found <a href="http://dbgroup.cs.tsinghua.edu.cn/wangyi/lda/lda.pdf">this paper</a> where all the mathematical derivations are nailed down. That way I was able to fully understand the method and at the same time being sure that my implementation was right and sound.  If you need more guidance, take a look at <a href="http://www.arbylon.net/projects/LdaGibbsSampler.java">this simple implementation</a> for getting an idea of the main functions and data structures you’ll have to code.</p>
+<p>Once you have your code written you will have to check whether it is correct or not. The example in <a href="http://www.pnas.org/content/101/suppl.1/5228.full.pdf">this paper</a> using pixel positions and pixel intensities instead of words and word counts is very illustrating and will show visually the correctness of your implementation. Once you have your algorithm up and running perhaps you want to scale it up to more machines, so you could benefit from reading <a href="http://www.ics.uci.edu/~asuncion/pubs/JMLR_09.pdf">this paper </a>and taking also a look at this <a href="http://blog.smola.org/post/6359713161/speeding-up-latent-dirichlet-allocation">blog post</a> from <a href="http://alex.smola.org/">Alex Smola</a> and their <a href="https://github.com/shravanmn/Yahoo_LDA">distributed implementation of LDA</a> on Github.</p>
+<p>Happy coding!!!</p>
+]]></description>
+    <pubDate>Mon, 28 Nov 2011 18:56:06 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2011/11/28/implementing-lda.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Getting started with JAGS for Bayesian Modelling</title>
+    <link>http://www.tonicebrian.com/posts/2011/09/13/getting-started-with-jags-for-bayesian-modelling.html</link>
+    <description><![CDATA[<div class="info">Posted on September 13, 2011</div>
+
+<p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
+<p>First install the required dependencies. In my Ubuntu 11.04, is something like:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</code></pre></div>
+<p>For Ubuntu 11.04 you have to install JAGS from sources, but it seems that this version will be packaged in the next Ubuntu release. Download the software from <a href="http://sourceforge.net/projects/mcmc-jags/">here</a> and install.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">tar</span> xvfz JAGS-3.1.0.tar.gz
+<span class="kw">cd</span> JAGS-3.1.0
+<span class="kw">./configure</span>
+<span class="kw">make</span>
+<span class="kw">sudo</span> make install</code></pre></div>
+<p>Now fire R and install the interface package rjags</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">R</span>
+<span class="kw">...</span>
+<span class="kw">&gt;</span> <span class="kw">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</code></pre></div>
+<p>Now let’s do something interesting (although pretty simple). Let’s assume we have a stream of 1s and 0s with an unknown proportion of each one. From R we can generate such distribution with the command</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">points</span> <span class="kw">&lt;</span>- floor(runif(1000)<span class="kw">+.4</span>)</code></pre></div>
+<p>that generates a distribution with roughly 40% of 1s and 60% of 0s. So, our stream consists of a sequence of 0s and 1s generated using the uniform(phi) distribution where the phi parameter equals 0.4.</p>
+<p>If we don’t know this parameter and we try to learn it, we can assume that this parameter has prior uniform in the range [0,1] and thus the model that describes this scenario in the Winbugs language is</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">model</span>
+<span class="kw">{</span>
+    <span class="kw">phi</span> ~ dunif(0,1);
+    <span class="kw">y</span> ~ dbin(phi,N);
+<span class="kw">}</span></code></pre></div>
+<p>In this model N and y are known, so we provide this information in order to estimate our unknown parameter phi. We create the model and query the resulting parameter distribution:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">result</span> <span class="kw">&lt;</span>- list(y=sum(points), <span class="ot">N=</span>1000)
+<span class="kw">&gt;</span> <span class="kw">result</span>
+<span class="ot">$y</span>
+[<span class="kw">1</span>] 393
+
+<span class="ot">$N</span>
+[<span class="kw">1</span>] 1000
+
+<span class="kw">&gt;</span> <span class="kw">library</span>(rjags)
+<span class="kw">Loading</span> required package: coda
+<span class="kw">Loading</span> required package: lattice
+<span class="kw">linking</span> to JAGS 3.1.0
+<span class="kw">module</span> basemod loaded
+<span class="kw">module</span> bugs loaded
+<span class="kw">&gt;</span> <span class="kw">myModel</span> <span class="kw">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)
+<span class="kw">Compiling</span> model graph
+   <span class="kw">Resolving</span> undeclared variables
+   <span class="kw">Allocating</span> nodes
+   <span class="kw">Graph</span> Size: 5
+
+<span class="kw">Initializing</span> model
+
+<span class="kw">&gt;</span> <span class="kw">update</span>(myModel, 1000)
+  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
+<span class="kw">&gt;</span> <span class="kw">x</span> <span class="kw">&lt;</span>- jags.samples(myModel, c(<span class="st">&#39;phi&#39;</span>), <span class="kw">1000</span>)
+  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
+<span class="kw">&gt;</span> <span class="kw">x</span>
+<span class="ot">$phi</span>
+<span class="kw">mcarray</span>:
+[<span class="kw">1</span>] 0.3932681
+
+<span class="kw">Marginalizing</span> over: iteration(1000),<span class="kw">chain</span>(1) 
+
+<span class="kw">&gt;</span></code></pre></div>
+<p>So the inferred value of phi is 0.3932. One interesting thing in Bayesian statistics is that it does not estimate points, but probabilistic distributions over the parameters. We can see how the phi parameter was estimated by examining the Monte Carlo Chain and the distribution of the generated values during the simulation</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">chain</span> <span class="kw">&lt;</span>- as.mcmc.list(x<span class="ot">$phi</span>)
+<span class="kw">&gt;</span> <span class="kw">plot</span>(chain)</code></pre></div>
+<div class="figure">
+<img src="chain.png" />
+
+</div>
+<p>Where we can see that the values for phi in the chain were centered around the 0.4, the true parameter value.</p>
+]]></description>
+    <pubDate>Tue, 13 Sep 2011 16:30:44 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2011/09/13/getting-started-with-jags-for-bayesian-modelling.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>My working environment with Xmonad</title>
+    <link>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</link>
+    <description><![CDATA[<div class="info">Posted on September  5, 2011</div>
+
+<p>Fire a terminal, fire another terminal and tail some logs, open your browser and point to the web page you are developing, open your IDE and open three or four tabs with the code you suspect is causing the bug, put some breakpoints, alt-tab to the first terminal start your system under test, connect your debugging IDE to your system, perform some operations to your browser, catch the breakpoint, switch back and forth the code tabs, etc… This daily routine common to most developers, involves grabbing the mouse, arranging some windows, and switching context continuously. This creates a cognitive overload and a lack of productivity because developers are doing tasks not directly related to the task at hand.</p>
+<p>This is the reason I don’t use Gnome any more and I’ve switched to <a href="http://xmonad.org/">Xmonad</a> a tiling window manager that can be controlled almost exclusively with the keyboard. With this fully configurable window manager, I can move, resize, minimize, arrange, customize all the visible windows, move windows between workspaces, all with my hands not leaving the keyboard.The only thing I have not been able to accomplish is having the UrgentHook working for Skype. The Linux version of Skype fails to set the WM_URGENT X11 event when a new chat opens, and if I’m not in that workspace I don’t get any notification besides the bell. Still thinking about a good workaround, any ideas?</p>
+<p>Here is a screenshot of xmonad in action with  some applications in it,</p>
+<div class="figure">
+<img src="xmonad.png" />
+
+</div>
+<p>If you plan to install Xmonad in your computer, use version 0.10 or superior because it solves some nasty problems with Java applications. In case it is not yet ready for your favourite distribution, follow <a href="https://sites.google.com/site/jifengstechcollection/linux/xmonad">these instructions</a>. In order to have this configuration working, just write the following 3 files:</p>
+<ul>
+<li><p>.<em>xsession</em> with the programs you need to start when the session begins (network manager, batery manager, etc…). Put it in your $HOME dir.</p></li>
+<li><p>.<em>xmobarrc</em> with the configuration of your handy <a href="http://gorgias.mine.nu/xmobar/">textual status bar</a> . Put it in your $HOME</p></li>
+<li><p><em>xmonad.hs</em> with the configuration of the window manager itself. Put it under $HOME/.xmonad</p></li>
+</ul>
+<p><strong>xmonad.hs</strong> is a pure Haskell file for configuring the window manager, no XML, not another fancy configuration language. Some comments to the configuration file</p>
+<ul>
+<li><p><strong>lines 23-26</strong>, send Thunderbird and Skype to their dedicated workspaces</p></li>
+<li><p><strong>line 29</strong>, name the workspaces</p></li>
+<li><p><strong>lines 32-50</strong>, define new key combinations, for navigating the tiling windows, send windows to background and toggle between the tiled arrangement and focusing the whole screen into one window</p></li>
+<li><p><strong>lines 52-55</strong>, define how I want the windows to be arranged. Basically, create a specific configuration for Skype in its dedicated workspace, and for the rest of workspaces, don’t hide the menu, allow navigation with the cursors and minimize unwanted windows.</p></li>
+<li><p><strong>lines 57-77</strong>, ensemble the main xmonad window manager with the desired configuration. Spawn the status bar, and append the predefined layouts, keybindings and window hooks. Redefine some keys and fool Java setting the name of the Window Manager to LG3D in order to avoid problems with focus.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> XMonad
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">DynamicLog</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ICCCMFocus</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageDocks</span>
+<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">Run</span>(spawnPipe)
+<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">EZConfig</span>(additionalKeys)
+<span class="kw">import</span> System.<span class="fu">IO</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageHelpers</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">UrgencyHook</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">SetWMName</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Minimize</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">WindowNavigation</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">ToggleLayouts</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">IM</span> as IM
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">PerWorkspace</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Reflect</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Grid</span>
+<span class="kw">import</span> Data.<span class="fu">Ratio</span> ((%))
+
+<span class="kw">import</span> qualified Data.<span class="fu">Map</span> as M
+
+-- Send applications to their dedicated Workspace
+myManageHook = composeAll
+                [ className =? <span class="st">&quot;Skype&quot;</span>         --&gt; doShift <span class="st">&quot;4:skype&quot;</span>,
+                  className =? <span class="st">&quot;Thunderbird&quot;</span>   --&gt; doShift <span class="st">&quot;2:mail&quot;</span>
+                ]
+
+-- Name the workspaces
+myWorkspaces = [<span class="st">&quot;1:dev&quot;</span>,<span class="st">&quot;2:mail&quot;</span>,<span class="st">&quot;3:web&quot;</span>,<span class="st">&quot;4:skype&quot;</span>,<span class="st">&quot;5:media&quot;</span>, <span class="st">&quot;6:office&quot;</span>] ++ map show [<span class="dv">7</span>..<span class="dv">9</span>]
+
+-- Add <span class="kw">new</span> Keys
+newKeys x = M.<span class="fu">union</span> (keys defaultConfig x) (M.<span class="fu">fromList</span> (myKeys x))
+
+myKeys conf@(XConfig {XMonad.<span class="fu">modMask</span> = modm}) =
+              [
+              -- Minimize a window
+                ((modm, xK_z),               withFocused minimizeWindow)
+              , ((modm .|. shiftMask, xK_z), sendMessage RestoreNextMinimizedWin  )
+              -- Window navigation <span class="kw">with</span> cursors
+              , ((modm,                 xK_Right), sendMessage $ Go R)
+              , ((modm,                 xK_Left ), sendMessage $ Go L)
+              , ((modm,                 xK_Up   ), sendMessage $ Go U)
+              , ((modm,                 xK_Down ), sendMessage $ Go D)
+              , ((modm .|. controlMask, xK_Right), sendMessage $ Swap R)
+              , ((modm .|. controlMask, xK_Left ), sendMessage $ Swap L)
+              , ((modm .|. controlMask, xK_Up   ), sendMessage $ Swap U)
+              , ((modm .|. controlMask, xK_Down ), sendMessage $ Swap D)
+              -- Togle Fullscreen
+              , ((modm,                 xK_f    ), sendMessage ToggleLayout)
+              ]
+
+-- Define the default layout
+skypeLayout = IM.<span class="fu">withIM</span> (<span class="dv">1</span>%<span class="dv">7</span>) (IM.<span class="fu">And</span> (ClassName <span class="st">&quot;Skype&quot;</span>)  (Role <span class="st">&quot;MainWindow&quot;</span>)) Grid
+normalLayout = windowNavigation $ minimize $ avoidStruts $ onWorkspace <span class="st">&quot;4:skype&quot;</span> skypeLayout $ layoutHook defaultConfig
+myLayout = <span class="fu">toggleLayouts</span> (Full) normalLayout
+
+-- Main executable
+main = <span class="kw">do</span>
+    xmproc &lt;- spawnPipe <span class="st">&quot;xmobar /home/cebrian/.xmobarrc&quot;</span>
+    xmonad $ withUrgencyHook NoUrgencyHook $ defaultConfig
+        { manageHook = manageDocks &lt;+&gt; myManageHook &lt;+&gt; manageHook defaultConfig
+        , keys = newKeys
+        , workspaces = myWorkspaces
+        , layoutHook = myLayout
+        , logHook = takeTopFocus &gt;&gt; dynamicLogWithPP xmobarPP
+                        { ppOutput = hPutStrLn xmproc
+                        , ppTitle = xmobarColor <span class="st">&quot;green&quot;</span> <span class="st">&quot;&quot;</span> . shorten <span class="dv">50</span>
+                        , ppUrgent = xmobarColor <span class="st">&quot;yellow&quot;</span> <span class="st">&quot;red&quot;</span> . xmobarStrip
+                        }
+        , modMask = mod4Mask     -- Rebind Mod to the Windows key
+        , terminal = <span class="st">&quot;terminator&quot;</span>
+        , startupHook = setWMName <span class="st">&quot;LG3D&quot;</span>
+        } `additionalKeys`
+        [ ((controlMask .|. shiftMask, xK_l), spawn <span class="st">&quot;xscreensaver-command -lock&quot;</span>)
+        , ((controlMask, xK_Print), spawn <span class="st">&quot;sleep 0.2; scrot -s&quot;</span>)
+        , ((<span class="dv">0</span>, xK_Print), spawn <span class="st">&quot;scrot&quot;</span>)
+        ]</code></pre></div>
+<p><strong>.xsession</strong></p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co">#!/bin/bash</span>
+
+<span class="kw">xrdb</span> -merge .Xresources
+
+<span class="co"># Configure xrandr for multiple monitors</span>
+<span class="co"># External output may be &quot;VGA&quot; or &quot;VGA-0&quot; or &quot;DVI-0&quot; or &quot;TMDS-1&quot;</span>
+<span class="ot">EXTERNAL_OUTPUT=</span><span class="st">&quot;VGA-0&quot;</span>
+<span class="ot">INTERNAL_OUTPUT=</span><span class="st">&quot;LVDS&quot;</span>
+<span class="co"># EXTERNAL_LOCATION may be one of: left, right, above, or below</span>
+<span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;left&quot;</span>
+
+<span class="co"># In case I want to have both monitors on</span>
+<span class="kw">case</span> <span class="st">&quot;</span><span class="ot">$EXTERNAL_LOCATION</span><span class="st">&quot;</span><span class="kw"> in</span>
+       left<span class="kw">|</span>LEFT<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       right<span class="kw">|</span>RIGHT<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--right-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       top<span class="kw">|</span>TOP<span class="kw">|</span>above<span class="kw">|</span>ABOVE<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--above </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       bottom<span class="kw">|</span>BOTTOM<span class="kw">|</span>below<span class="kw">|</span>BELOW<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--below </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       *<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+<span class="kw">esac</span>
+<span class="kw">xrandr</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="ot">$EXTERNAL_OUTPUT</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="st">&quot; connected &quot;</span>
+
+<span class="kw">if [</span> <span class="ot">$?</span> <span class="ot">-eq</span> 0<span class="kw"> ]</span>; <span class="kw">then</span>
+    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --off --output <span class="ot">$EXTERNAL_OUTPUT</span> --auto
+    <span class="co"># Alternative command in case of trouble:</span>
+    <span class="co"># (sleep 2; xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_LOCATION) &amp;</span>
+<span class="kw">else</span>
+    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --auto --output <span class="ot">$EXTERNAL_OUTPUT</span> --off
+<span class="kw">fi</span>
+
+<span class="kw">trayer</span> --edge top --align right --SetDockType true --SetPartialStrut true --expand true --width 15 --height 12 --transparent true --tint 0x000000 <span class="kw">&amp;</span>
+
+<span class="kw">xscreensaver</span> -no-splash <span class="kw">&amp;</span>
+
+<span class="co"># Allow nautilus to take care of plugin USB drives and Dropbox icons</span>
+<span class="kw">nautilus</span> --no-desktop -n <span class="kw">&amp;</span>
+
+<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/nm-applet<span class="kw"> ]</span> ; <span class="kw">then</span>
+   <span class="kw">nm-applet</span> --sm-disable <span class="kw">&amp;</span>
+<span class="kw">fi</span>
+
+<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/gnome-power-manager<span class="kw"> ]</span> ; <span class="kw">then</span>
+   <span class="kw">sleep</span> 1
+   <span class="kw">gnome-power-manager</span> <span class="kw">&amp;</span>
+<span class="kw">fi</span>
+
+<span class="kw">/usr/bin/gnome-volume-control-applet</span> <span class="kw">&amp;</span>
+<span class="kw">dropbox</span> start <span class="kw">&amp;</span>
+
+<span class="kw">exec</span> /home/cebrian/.cabal/bin/xmonad</code></pre></div>
+<p><strong>.xmobarrc</strong></p>
+<pre class="plain"><code>Config { font = &quot;-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*&quot;
+       , bgColor = &quot;black&quot;
+       , fgColor = &quot;grey&quot;
+       , position = TopW L 85
+       , commands = [ Run Cpu [&quot;-L&quot;,&quot;3&quot;,&quot;-H&quot;,&quot;50&quot;,&quot;--normal&quot;,&quot;green&quot;,&quot;--high&quot;,&quot;red&quot;] 10
+                    , Run Memory [&quot;-t&quot;,&quot;Mem: &lt;usedratio&gt;%&quot;] 10
+                    , Run Swap [] 10
+                    , Run Date &quot;%a %b %_d %Y %H:%M:%S&quot; &quot;date&quot; 10
+                    , Run StdinReader
+                    ]
+       , sepChar = &quot;%&quot;
+       , alignSep = &quot;}{&quot;
+       , template = &quot;%StdinReader% }{ %cpu% | %memory% * %swap%    &lt;fc=#ee9a00&gt;%date%&lt;/fc&gt;&quot;
+       }</code></pre>
+<p>And don’t forget to add an entry for your new Xmonad desktop in <strong>/usr/share/applications/xmonad.desktop</strong> changing the path to your appropiate home</p>
+<pre class="plain"><code>[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Xmonad
+Exec=&quot;YOUR HOME HERE&quot;/.xsession
+NoDisplay=true
+X-GNOME-WMName=Xmonad
+X-GNOME-Autostart-Phase=WindowManager
+X-GNOME-Provides=windowmanager
+X-GNOME-Autostart-Notify=true</code></pre>
+<p>And to <strong>/usr/share/xsessions/xmonad.desktop</strong></p>
+<pre class="plain"><code>[Desktop Entry]
+Encoding=UTF-8
+Name=XMonad
+Comment=Lightweight tiling window manager
+Exec=&quot;YOUR HOME HERE&quot;/.xsession
+Icon=xmonad.png
+Type=XSession</code></pre>
+]]></description>
+    <pubDate>Mon, 05 Sep 2011 11:00:16 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
+    <title>Maximal clique enumeration using C++0x and the STL</title>
+    <link>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</link>
+    <description><![CDATA[<div class="info">Posted on August 29, 2011</div>
+
+<p>Lately I’ve started to take a look at how parallelism is being done in a pure functional language like Haskell and their related technologies <a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/parallel/remote.pdf">Haskell in the Cloud</a> and <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a>. As a proof of concept and in order to better learn those techniques, I want to parallelize the <a href="http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm">Bron-Kerbosch algorithm</a> that returns the set of maximal <a href="http://en.wikipedia.org/wiki/Clique_%28graph_theory%29">cliques</a> in a graph.The Bron-Kerbosch algorithm in pseudocode is something like this:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function bronKerbosch()
+compsub <span class="op">=</span> []
+cand <span class="op">=</span> V
+<span class="op">not</span> <span class="op">=</span> []
+cliqueEnumerate(compsub, cand, <span class="op">not</span>)</code></pre></div>
+<p>and the <em>cliqueEnumerate</em> function in pseudo-code:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function cliqueEnumerate(compsub, cand, <span class="op">not</span>)
+<span class="cf">if</span> cand <span class="op">=</span> [] then 
+    <span class="cf">if</span> <span class="op">not</span> <span class="op">=</span> [] then
+        Output compsub
+<span class="cf">else</span>
+    fixp <span class="op">=</span> The vertex <span class="op">in</span> cand that <span class="op">is</span> connected to the greatest number of other vertices <span class="op">in</span> cand
+    cur_v <span class="op">=</span> fixp
+    <span class="cf">while</span> cur_v <span class="op">!=</span> NULL do
+        new_not <span class="op">=</span> All vertices <span class="op">in</span> <span class="op">not</span> that are connected to cur_v
+        new_cand <span class="op">=</span> All vertices <span class="op">in</span> cand that are connected to cur_v
+        new_compsub <span class="op">=</span> compsub <span class="op">+</span> cur_v
+        cliqueEnumerate(new_compsub, new_cand, new_not)
+        <span class="op">not</span> <span class="op">=</span> <span class="op">not</span> <span class="op">+</span> cur_v
+        cand <span class="op">=</span> cand <span class="op">-</span> cur_v
+        <span class="cf">if</span> there <span class="op">is</span> a vertex v <span class="op">in</span> cand that <span class="op">is</span> <span class="op">not</span> connected to fixp then
+           cur_v <span class="op">=</span> v
+        <span class="cf">else</span>
+           cur_v <span class="op">=</span> NULL</code></pre></div>
+<p>This pseudocode is from the paper, <a href="http://www.sciencedirect.com/science/article/pii/S0743731509000082"><em>A scalable, parallel algorithm for maximal clique enumeration</em></a></p>
+<p>I have written a first version of this algorithm in Haskell but, as a baseline and because I wanted to test the new features of the new C++0x standard, I’ve written this algorithm in C++ making extensive use of the STL and the lambdas. I forgot how verbose C++ is but the addition of the keyword <strong>auto</strong> and the lambdas has somehow alleviated it a little.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">void</span> Graph::cliqueEnumerate(<span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; compsub,
+                     vector&lt;<span class="dt">int</span>&gt; cand,
+                     vector&lt;<span class="dt">int</span>&gt; cnot,
+                     vector&lt;vector&lt;<span class="dt">int</span>&gt; &gt;&amp; result) <span class="dt">const</span> {
+
+    <span class="co">// Function that answer whether the node is conected</span>
+    <span class="kw">if</span>(cand.empty()){
+        <span class="kw">if</span>(cnot.empty()){
+            <span class="co">// New clique found</span>
+            result.push_back(compsub);
+        }
+    } <span class="kw">else</span>{
+        <span class="dt">int</span> fixp = findFixP(cand);
+        <span class="dt">int</span> cur_v = fixp;
+
+        <span class="kw">while</span>(cur_v != <span class="dv">-1</span>){
+            vector&lt;<span class="dt">int</span>&gt; new_not;
+            vector&lt;<span class="dt">int</span>&gt; new_cand;
+            vector&lt;<span class="dt">int</span>&gt; new_compsub;
+
+            <span class="co">// Auxiliar lambda function</span>
+            <span class="kw">auto</span> isConected =[cur_v,<span class="kw">this</span>](<span class="dt">int</span> x) {
+                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
+                <span class="kw">return</span> find(edges.begin(), edges.end(), cur_v) != edges.end();
+            }; 
+
+            <span class="co">// Compose new vector</span>
+            <span class="co">// Avoid performance bottlenecks by reserving memory before hand</span>
+            new_compsub.reserve(compsub.size()<span class="dv">+1</span>);
+            new_not.reserve(cnot.size());
+            new_cand.reserve(cand.size());
+            copy_if(cnot.begin(),cnot.end(),back_inserter(new_not),isConected);
+            copy_if(cand.begin(),cand.end(),back_inserter(new_cand),isConected);
+            copy(compsub.begin(), compsub.end(), back_inserter(new_compsub));
+            new_compsub.push_back(cur_v);
+
+            <span class="co">// Recursive call</span>
+            cliqueEnumerate(new_compsub, new_cand, new_not, result);
+
+            <span class="co">// Generate new cnot and cand for the loop</span>
+            cnot.push_back(cur_v);
+            cand.erase(find(cand.begin(),cand.end(),cur_v));
+
+            <span class="co">// Last check</span>
+            <span class="kw">auto</span> v = find_if(cand.begin(),
+                             cand.end(), 
+                             [fixp,<span class="kw">this</span>](<span class="dt">int</span> x) {
+                                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
+                                <span class="kw">return</span> find(edges.begin(), edges.end(), fixp) == edges.end();
+                             });
+
+            <span class="co">// Obtain new cur_v value</span>
+            <span class="kw">if</span>(v != cand.end()) cur_v = *v;
+            <span class="kw">else</span> <span class="kw">break</span>;
+        }
+    }
+}</code></pre></div>
+<p>and the helper function <em>findFixP</em> is:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">int</span> Graph::findFixP(vector&lt;<span class="dt">int</span>&gt; cand) <span class="dt">const</span> {
+    vector&lt;<span class="dt">int</span>&gt; connections;
+    connections.resize(cand.size());
+
+    <span class="co">// This is necessary for the set_intersection function</span>
+    sort(cand.begin(),cand.end());
+
+    <span class="co">// Auxiliar lambda function</span>
+    <span class="kw">auto</span> intersection = [&amp;cand, <span class="kw">this</span>](<span class="dt">int</span> x) -&gt; <span class="dt">int</span> {
+        <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; x_edges = <span class="kw">this</span>-&gt;getEdges(x);
+        vector&lt;<span class="dt">int</span>&gt; intersection;
+
+        set_intersection(x_edges.begin(), x_edges.end(),
+                         cand.begin(), cand.end(),
+                         back_inserter(intersection));
+        <span class="kw">return</span> intersection.size();
+    };
+
+    <span class="co">// Create an auxiliar vector with the intersection sizes</span>
+    transform(cand.begin(),cand.end(),connections.begin(),intersection);
+
+    <span class="co">// Find the maximum size and return the corresponding edge</span>
+    vector&lt;<span class="dt">int</span>&gt;::const_iterator it1, it2,itmax;
+    <span class="dt">int</span> max = <span class="dv">-1</span>;
+    itmax = cand.end();
+    <span class="kw">for</span>(it1=cand.begin(),it2=connections.begin(); it1!=cand.end(); ++it1,++it2){
+        <span class="kw">if</span>(max &lt; *it2){
+            max = *it2;
+            itmax = it1;
+        }
+    }
+    <span class="kw">if</span>(itmax == cand.end()) <span class="kw">return</span> <span class="dv">-1</span>;
+    <span class="kw">else</span> <span class="kw">return</span> *itmax;
+    }
+}</code></pre></div>
+<p>For this function my first attempt was to write it using the <em>std::max_element</em> function, but I was worried that since the function we pass isn’t a transformation of the data but a comparison function (<em>less</em>), I was worried that on each comparison the set_intersection would be computed redundantly on each step.</p>
+<p>There can be, for sure, room for improvement (any C++ guru in the audience?), but I’m pretty satisfied with the obtained implementation. It reads almost as the pseudocode. I think this is because I first wrote the Haskell version and the C++ has the functional flavor in it. Would I write first the C++ version and there would be for sure lots of nasty loops and array indexes.</p>
+]]></description>
+    <pubDate>Mon, 29 Aug 2011 11:01:00 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+
+    </channel>
+</rss>

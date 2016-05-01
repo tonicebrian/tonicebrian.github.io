@@ -28,7 +28,7 @@ main = hakyll $ do
         route idRoute
         compile copyFileCompiler
 
-    match (fromList ["about.rst", "contact.markdown"]) $ do
+    match (fromList ["about.rst", "contact.rst"]) $ do
         route   $ setExtension "html"
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/default.html" (mathCtx `mappend` defaultContext)
@@ -46,14 +46,14 @@ main = hakyll $ do
         route idRoute
         compile $ do
             posts <- recentFirst =<< loadAll markdownArticleFilter
-            let archiveCtx =
-                    listField "posts" postCtx (return posts) `mappend`
+            let archiveContext =
+                    listField "posts" archiveCtx (return posts) `mappend`
                     constField "title" "Archives" `mappend`
                     defaultContext
 
             makeItem ""
-                >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
-                >>= loadAndApplyTemplate "templates/default.html" archiveCtx
+                >>= loadAndApplyTemplate "templates/archive.html" archiveContext
+                >>= loadAndApplyTemplate "templates/default.html" archiveContext
                 >>= relativizeUrls
 
     create ["atom.xml"] $ do
@@ -100,6 +100,12 @@ myFeedConfiguration = FeedConfiguration {
     , feedAuthorEmail = "toni.cebrian@gmail.com"
     , feedRoot = "http://www.tonicebrian.com"
 }
+
+--------------------------------------------------------------------------------
+archiveCtx :: Context String
+archiveCtx =
+    dateField "date" "%B %e, %Y" `mappend`
+    defaultContext
 
 --------------------------------------------------------------------------------
 postCtx :: Context String

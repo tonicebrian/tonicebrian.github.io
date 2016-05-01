@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Parser combinators in Scala</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Parser combinators in Scala
+  </h2>
+  <p class="blog-post-meta">
+    Posted on February 23, 2012
+    
+  </p>
+  <p>Lately, I’ve been writing some <a href="http://research.yahoo.com/files/ieeecomputer.pdf">matrix factorization</a> code for a video recommender system. I’m a big fan of Test Driven Development but it is a technique that is difficult for me to apply to the numerical or algorithmic domain. In order to make sure that the code I write is correct what I’m doing is the Oracle Test Pattern (I’m sure there is a correct name for this but I’m not able to find it right now). The idea is to have a reference implementation that solves the exact problem you are trying to solve. In my case, that reference implementation does not exists but I’m writing a straightforward unoptimized version of the script in Python using the Numpy libraries. That will be my ground truth when comparing results with the highly optimized parallel Scala version of the algorithm.</p>
+<h3 id="the-problem">The problem</h3>
+<p>So the problem is that I’m working interactively coding the algorithm in an iPython session and I’m getting results of this kind</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">In [<span class="dv">4</span>]: x
+Out[<span class="dv">4</span>]:
+matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span class="fl">0.35836827</span>, <span class="op">-</span><span class="fl">2.06492572</span>,  <span class="fl">1.49773613</span>, <span class="op">-</span><span class="fl">1.01988835</span>,
+         <span class="op">-</span><span class="fl">0.20590096</span>, <span class="op">-</span><span class="fl">0.19658741</span>],
+        [ <span class="fl">0.43055155</span>,  <span class="fl">1.07532444</span>,  <span class="fl">0.89299596</span>, <span class="op">-</span><span class="fl">1.070371</span>  , <span class="op">-</span><span class="fl">0.24015718</span>,
+          <span class="fl">0.04521229</span>, <span class="op">-</span><span class="fl">1.39209522</span>],
+        [<span class="op">-</span><span class="fl">0.4482701</span> ,  <span class="fl">0.15201451</span>, <span class="op">-</span><span class="fl">1.42824771</span>,  <span class="fl">1.13859559</span>,  <span class="fl">0.66432642</span>,
+          <span class="fl">0.51184435</span>,  <span class="fl">0.52637519</span>],
+        [<span class="op">-</span><span class="fl">0.26518471</span>, <span class="op">-</span><span class="fl">1.14331753</span>, <span class="op">-</span><span class="fl">1.15492029</span>, <span class="op">-</span><span class="fl">0.27501194</span>,  <span class="fl">1.73750282</span>,
+         <span class="op">-</span><span class="fl">1.4118682</span> ,  <span class="fl">0.14701005</span>],
+        [<span class="op">-</span><span class="fl">1.6577536</span> , <span class="op">-</span><span class="fl">0.0781593</span> , <span class="op">-</span><span class="fl">0.01558478</span>,  <span class="fl">0.67277257</span>, <span class="op">-</span><span class="fl">0.07249647</span>,
+          <span class="fl">0.70946581</span>, <span class="op">-</span><span class="fl">0.82349608</span>]])</code></pre></div>
+<p>and I would like to just copy and paste this string and use it as the expected value in my Scala tests. That would involve to remove “matrix”, all the “[&quot; and “]”, substitute them for their Array() equivalents and put an <strong>F</strong> at the end of each number denoting that it is a Float. Too much work.</p>
+<h3 id="the-solution">The solution</h3>
+<p>If there is an area where functional languages shine is in creating DSLs. More specifically creating an <a href="http://martinfowler.com/bliki/InternalDslStyle.html">internal DSL</a> that looks more like an <a href="http://martinfowler.com/bliki/DomainSpecificLanguage.html">external DSL</a>. In Scala you can use the <a href="http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html">Parser Combinator libraries</a> that are part of the Scala’s core libraries. Such parser will be something like</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">class</span> PyMatrixParser <span class="kw">extends</span> JavaTokenParsers {
+  <span class="kw">def</span> matrix:Parser[Array[Array[Float]]] = <span class="st">&quot;matrix([&quot;</span> ~&gt; <span class="fu">repsep</span>(row,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;])&quot;</span> ^^ (_.<span class="fu">toArray</span>)
+  <span class="kw">def</span> row:Parser[Array[Float]] = <span class="st">&quot;[&quot;</span>~&gt; <span class="fu">repsep</span>(floatingPointNumber,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;]&quot;</span> ^^ (_.<span class="fu">map</span>(_.<span class="fu">toFloat</span>).<span class="fu">toArray</span>)
+}</code></pre></div>
+<p>using this parser is then just a matter of</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> parser = <span class="kw">new</span> PyMatrixParser
+<span class="kw">val</span> scalaMatrix = parser.<span class="fu">parseAll</span>(parser.<span class="fu">matrix</span>, theStringMatrix).<span class="fu">get</span></code></pre></div>
+<p>quite good result for just 2 lines of code defining the parser.</p>
+<p>This is the quick overview for those not familiar with Scala’s syntax</p>
+<ul>
+<li><p>Every String that is found where a Scala Parser was meant to be, is automatically transformed into a constant parser that matches that exact string. So for instance,_“matrix([”_gets converted into a parser by one of the implicits in the parser combinators libraries.</p></li>
+<li><p><em>rep(row,“,”)</em> takes two parsers as parameters and means that parser #1 will be repeated 0 or more times interleaved by parser #2</p></li>
+<li><p>The parser combinators_ “~&gt;”_ and <em>“&lt;~”</em> denote that the parser pointed by the arrow must be keep as the result of the parsing while the parser pointed by the tail must be discarded. This is helpful for combining two parser where one of them is just ornamental.</p></li>
+<li><p>floatingPointNumber is a parser provided by the library that parses float point string representations</p></li>
+<li><p>Each parser returns either the parsed string or a more complex Scala structure, like for instance, a list of strings in the case of <em>rep(parser1,parser2)</em>. Those results are sent to a parser transformator (the_ ^^_ operator) that works on the parser results and generates the true parsing result. In the example, first we create an array of Floats, and then an Array of Arrays of Floats that represent my matrix.</p></li>
+</ul>
+<p>Really cool feature that has spared me a lot of grunt work by just writing two lines of code.</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

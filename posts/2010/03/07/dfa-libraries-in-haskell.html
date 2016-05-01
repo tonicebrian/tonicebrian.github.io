@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - DFA libraries in Haskell</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    DFA libraries in Haskell
+  </h2>
+  <p class="blog-post-meta">
+    Posted on March  7, 2010
+    
+  </p>
+  <p>Since I’m planning to write all the software for my final Master’s Thesis in Haskell, the first natural step is to look for libraries already implementing Probabilistic Discrete Finite Automata in Haskell. The probabilistic condition was too much constraining and I have been only able to find some implementations of simple DFA. Here are the ones I have found:</p>
+<ul>
+<li><p><a href="http://www.di.uminho.pt/~jas/Research/HaLeX/HaLeX.html">Halex</a> is a library for manipulating regular languages. It’s a library developed at the University of Minho that also serves as the base lexer for the <a href="http://wiki.di.uminho.pt/twiki/bin/view/Research/PURe/PUReSoftware">HaGLR</a> (a generalized LR parser). It has the nice feature of generating Graphviz diagrams from the DFAs. It is distributed under the LPGL</p></li>
+<li><p>In this <a href="http://vorlon.case.edu/~lps/software/automata/">page</a> you can download the software implementation that is explained in this <a href="citeseer.ist.psu.edu/461156.html">paper</a> (<em>A Collection of Functional Libraries for Theory of Computation)</em>. The software is distributed under the LPGL.</p></li>
+<li><p>When browsing through the Haskell Wiki you can find the <a href="http://www.haskell.org/haskellwiki/Regular_expressions#regex-dfa">regular expressions</a> implementations. But the implementation of reference for the DFAs seems that is embedded in a more complex library, the<a href="http://www.cse.unsw.edu.au/~chak/haskell/ctk/">Compiler Toolkit for Haskell</a>.</p></li>
+<li><p>A number of implementations written by Haskell enthusiasts and documented in their blogs like this <a href="http://nickelcode.com/2009/11/08/using-a-haskell-dfa-type-to-match-strings/">one</a> and this <a href="http://blogs.msdn.com/matt/archive/2008/06/01/writing-a-regular-expression-parser-in-haskell-part-1.aspx">set</a> of articles.</p></li>
+</ul>
+<p>Given this quick research of the available possibilities, the final choice will be to use the implementation described in the paper <em>A Collection of Functional Libraries for Theory of Computation</em> for the creation of a Probabilistic DFA library. Here are the reasons:</p>
+<ul>
+<li><p>This is a LPGL library so I can use it without restrictions. I will try to get a clean code so I could contribute back.</p></li>
+<li><p>The library seems that is focused on the DFA where other options are more focused on creating a good lexer to be included on a bigger piece of code like a parser or similar.</p></li>
+<li><p>It is well documented and can help me to understand the underlying design decisions.</p></li>
+<li><p>It is very small and I won’t get lost in the subtleties of a bigger implementation. Since I am a novice Haskeller this is a plus.</p></li>
+</ul>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

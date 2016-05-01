@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Maximal clique enumeration using C++0x and the STL</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Maximal clique enumeration using C++0x and the STL
+  </h2>
+  <p class="blog-post-meta">
+    Posted on August 29, 2011
+    
+  </p>
+  <p>Lately I’ve started to take a look at how parallelism is being done in a pure functional language like Haskell and their related technologies <a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/parallel/remote.pdf">Haskell in the Cloud</a> and <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a>. As a proof of concept and in order to better learn those techniques, I want to parallelize the <a href="http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm">Bron-Kerbosch algorithm</a> that returns the set of maximal <a href="http://en.wikipedia.org/wiki/Clique_%28graph_theory%29">cliques</a> in a graph.The Bron-Kerbosch algorithm in pseudocode is something like this:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function bronKerbosch()
+compsub <span class="op">=</span> []
+cand <span class="op">=</span> V
+<span class="op">not</span> <span class="op">=</span> []
+cliqueEnumerate(compsub, cand, <span class="op">not</span>)</code></pre></div>
+<p>and the <em>cliqueEnumerate</em> function in pseudo-code:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function cliqueEnumerate(compsub, cand, <span class="op">not</span>)
+<span class="cf">if</span> cand <span class="op">=</span> [] then 
+    <span class="cf">if</span> <span class="op">not</span> <span class="op">=</span> [] then
+        Output compsub
+<span class="cf">else</span>
+    fixp <span class="op">=</span> The vertex <span class="op">in</span> cand that <span class="op">is</span> connected to the greatest number of other vertices <span class="op">in</span> cand
+    cur_v <span class="op">=</span> fixp
+    <span class="cf">while</span> cur_v <span class="op">!=</span> NULL do
+        new_not <span class="op">=</span> All vertices <span class="op">in</span> <span class="op">not</span> that are connected to cur_v
+        new_cand <span class="op">=</span> All vertices <span class="op">in</span> cand that are connected to cur_v
+        new_compsub <span class="op">=</span> compsub <span class="op">+</span> cur_v
+        cliqueEnumerate(new_compsub, new_cand, new_not)
+        <span class="op">not</span> <span class="op">=</span> <span class="op">not</span> <span class="op">+</span> cur_v
+        cand <span class="op">=</span> cand <span class="op">-</span> cur_v
+        <span class="cf">if</span> there <span class="op">is</span> a vertex v <span class="op">in</span> cand that <span class="op">is</span> <span class="op">not</span> connected to fixp then
+           cur_v <span class="op">=</span> v
+        <span class="cf">else</span>
+           cur_v <span class="op">=</span> NULL</code></pre></div>
+<p>This pseudocode is from the paper, <a href="http://www.sciencedirect.com/science/article/pii/S0743731509000082"><em>A scalable, parallel algorithm for maximal clique enumeration</em></a></p>
+<p>I have written a first version of this algorithm in Haskell but, as a baseline and because I wanted to test the new features of the new C++0x standard, I’ve written this algorithm in C++ making extensive use of the STL and the lambdas. I forgot how verbose C++ is but the addition of the keyword <strong>auto</strong> and the lambdas has somehow alleviated it a little.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">void</span> Graph::cliqueEnumerate(<span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; compsub,
+                     vector&lt;<span class="dt">int</span>&gt; cand,
+                     vector&lt;<span class="dt">int</span>&gt; cnot,
+                     vector&lt;vector&lt;<span class="dt">int</span>&gt; &gt;&amp; result) <span class="dt">const</span> {
+
+    <span class="co">// Function that answer whether the node is conected</span>
+    <span class="kw">if</span>(cand.empty()){
+        <span class="kw">if</span>(cnot.empty()){
+            <span class="co">// New clique found</span>
+            result.push_back(compsub);
+        }
+    } <span class="kw">else</span>{
+        <span class="dt">int</span> fixp = findFixP(cand);
+        <span class="dt">int</span> cur_v = fixp;
+
+        <span class="kw">while</span>(cur_v != <span class="dv">-1</span>){
+            vector&lt;<span class="dt">int</span>&gt; new_not;
+            vector&lt;<span class="dt">int</span>&gt; new_cand;
+            vector&lt;<span class="dt">int</span>&gt; new_compsub;
+
+            <span class="co">// Auxiliar lambda function</span>
+            <span class="kw">auto</span> isConected =[cur_v,<span class="kw">this</span>](<span class="dt">int</span> x) {
+                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
+                <span class="kw">return</span> find(edges.begin(), edges.end(), cur_v) != edges.end();
+            }; 
+
+            <span class="co">// Compose new vector</span>
+            <span class="co">// Avoid performance bottlenecks by reserving memory before hand</span>
+            new_compsub.reserve(compsub.size()<span class="dv">+1</span>);
+            new_not.reserve(cnot.size());
+            new_cand.reserve(cand.size());
+            copy_if(cnot.begin(),cnot.end(),back_inserter(new_not),isConected);
+            copy_if(cand.begin(),cand.end(),back_inserter(new_cand),isConected);
+            copy(compsub.begin(), compsub.end(), back_inserter(new_compsub));
+            new_compsub.push_back(cur_v);
+
+            <span class="co">// Recursive call</span>
+            cliqueEnumerate(new_compsub, new_cand, new_not, result);
+
+            <span class="co">// Generate new cnot and cand for the loop</span>
+            cnot.push_back(cur_v);
+            cand.erase(find(cand.begin(),cand.end(),cur_v));
+
+            <span class="co">// Last check</span>
+            <span class="kw">auto</span> v = find_if(cand.begin(),
+                             cand.end(), 
+                             [fixp,<span class="kw">this</span>](<span class="dt">int</span> x) {
+                                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
+                                <span class="kw">return</span> find(edges.begin(), edges.end(), fixp) == edges.end();
+                             });
+
+            <span class="co">// Obtain new cur_v value</span>
+            <span class="kw">if</span>(v != cand.end()) cur_v = *v;
+            <span class="kw">else</span> <span class="kw">break</span>;
+        }
+    }
+}</code></pre></div>
+<p>and the helper function <em>findFixP</em> is:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">int</span> Graph::findFixP(vector&lt;<span class="dt">int</span>&gt; cand) <span class="dt">const</span> {
+    vector&lt;<span class="dt">int</span>&gt; connections;
+    connections.resize(cand.size());
+
+    <span class="co">// This is necessary for the set_intersection function</span>
+    sort(cand.begin(),cand.end());
+
+    <span class="co">// Auxiliar lambda function</span>
+    <span class="kw">auto</span> intersection = [&amp;cand, <span class="kw">this</span>](<span class="dt">int</span> x) -&gt; <span class="dt">int</span> {
+        <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; x_edges = <span class="kw">this</span>-&gt;getEdges(x);
+        vector&lt;<span class="dt">int</span>&gt; intersection;
+
+        set_intersection(x_edges.begin(), x_edges.end(),
+                         cand.begin(), cand.end(),
+                         back_inserter(intersection));
+        <span class="kw">return</span> intersection.size();
+    };
+
+    <span class="co">// Create an auxiliar vector with the intersection sizes</span>
+    transform(cand.begin(),cand.end(),connections.begin(),intersection);
+
+    <span class="co">// Find the maximum size and return the corresponding edge</span>
+    vector&lt;<span class="dt">int</span>&gt;::const_iterator it1, it2,itmax;
+    <span class="dt">int</span> max = <span class="dv">-1</span>;
+    itmax = cand.end();
+    <span class="kw">for</span>(it1=cand.begin(),it2=connections.begin(); it1!=cand.end(); ++it1,++it2){
+        <span class="kw">if</span>(max &lt; *it2){
+            max = *it2;
+            itmax = it1;
+        }
+    }
+    <span class="kw">if</span>(itmax == cand.end()) <span class="kw">return</span> <span class="dv">-1</span>;
+    <span class="kw">else</span> <span class="kw">return</span> *itmax;
+    }
+}</code></pre></div>
+<p>For this function my first attempt was to write it using the <em>std::max_element</em> function, but I was worried that since the function we pass isn’t a transformation of the data but a comparison function (<em>less</em>), I was worried that on each comparison the set_intersection would be computed redundantly on each step.</p>
+<p>There can be, for sure, room for improvement (any C++ guru in the audience?), but I’m pretty satisfied with the obtained implementation. It reads almost as the pseudocode. I think this is because I first wrote the Haskell version and the C++ has the functional flavor in it. Would I write first the C++ version and there would be for sure lots of nasty loops and array indexes.</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

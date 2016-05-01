@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Introduction to the Minhash algorithm</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Introduction to the Minhash algorithm
+  </h2>
+  <p class="blog-post-meta">
+    Posted on March 11, 2013
+    
+  </p>
+  <p>Say that you have a collection of <em>N</em> objects and you want to want to compare each object against each other. Maybe you are interested in the distance between objects in an Euclidean Space or just the number of attributes or features they share. If you need to perform each comparison, you’ll need to perform <span class="math inline">\(O(N^2)\)</span> and that’s a problem when your N is in the order of the millions or tens of millions, likely the order of your user or item company’s database. Is there a way to perform less comparisons when we aren’t interested in the whole set of comparison but just in finding the set of closest items under a given measure? Yes, the <a href="http://en.wikipedia.org/wiki/MinHash">Minhash Algorithm</a>.</p>
+<p>In this post we are going to be focused in the Jackard Coefficient for determining the closeness between two objects. Each of the N object will have a set of <em>m</em> features where <em>m </em> usually is very large. You can think of the objects in N as the members of a social network or Amazon customers, and the set of features that describe them all the friends they have in the social network or all the books they previously purchased in the second case. Comparing two users would imply comparing their feature sets using the Jackard Coefficient formula:</p>
+<p><span class="math display">\[JackardCoeff(A,B)=\frac{|A\cap B|}{|A\cup B|}\]</span></p>
+<h3 id="understanding-the-minhash-algorithm">Understanding the Minhash Algorithm</h3>
+<p>All the MinHash functionality relies on this mathematical property</p>
+<p><span class="math display">\[P(\min\pi(A)=\min\pi(B)) = \frac{|A\cap B|}{|A\cup B|}\]</span></p>
+<p>Where <span class="math inline">\(\pi\)</span> is a function that creates a permutation of its set argument. This reads as follow, <em>Given a random function over the orderings of the elements of a universe U to which A and B belongs, the probability that the minimum element on both sets coincides is equal to the Jackard Coefficient defined as the number of elements in the intersection of the sets over the number of elements in the union</em>.</p>
+<p>What does this mean? Let’s break down the constituent parts. The function <span class="math inline">\(\pi\)</span> is a function that transforms the natural ordering of a set into a new ordering. There are lots of different functions that create different orders for a given set. Let’s see this with an example.</p>
+<p>Say that our set is the set of vowels in the alphabet <span class="math inline">\(V={a,e,i,o,u}\)</span>. A natural ordering of the elements would be <span class="math inline">\(a&lt;e&lt;i&lt;o&lt;u\)</span>. Another different ordering could be a function <span class="math inline">\(\pi_X\)</span> that given the set of vowels <em>V</em> generates the following ordering <span class="math inline">\(o&lt;e&lt;i&lt;u&lt;a\)</span>. For convenience and since the ordering is a <a href="http://en.wikipedia.org/wiki/Total_order">Total Order</a>, we can map the elements of the set to the natural numbers taking the position of the element in the ordering. For the natural ordering of the vowels, <span class="math inline">\(\pi_{NAT}\)</span>, we have that</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Vowel</th>
+<th align="left">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">e</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">i</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">o</td>
+<td align="left">4</td>
+</tr>
+<tr class="odd">
+<td align="left">u</td>
+<td align="left">5</td>
+</tr>
+</tbody>
+</table>
+<p>and with the other ordering <span class="math inline">\(\pi_X\)</span> the vowels map to</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Vowel</th>
+<th align="left">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a</td>
+<td align="left">5</td>
+</tr>
+<tr class="even">
+<td align="left">e</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">i</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">o</td>
+<td align="left">1</td>
+</tr>
+<tr class="odd">
+<td align="left">u</td>
+<td align="left">4</td>
+</tr>
+</tbody>
+</table>
+<p>Table:</p>
+<p>Thus given an ordering, if we apply it to a subset of the universe of objects we get their positions in the new ordering. For instance: <span class="math display">\[\pi_X(\{e,i,o\})=\{2,3,1\}\]</span></p>
+<p>So going back to the original formula, <strong>the probability</strong> that the minimal value of the transformation of each set, say <span class="math inline">\(A=\{e,i,o\}\)</span> and <span class="math inline">\(B=\{a,e\}\)</span>, according to a new orderding, <span class="math inline">\(\pi_X\)</span>, is equal to the Jackard Coefficient. In this case we can compute the Jackard Coefficient exactly and it is: <span class="math display">\[\frac{|\{e,i,o\}\cap\{a,e\}|}{|\{e,i,o\}\cup\{a,e\}|} =\frac{|\{e\}|}{|\{a,e,i,o\}|} = \frac{1}{4} \]</span></p>
+<p>This number means that whenever we pick a transformation <span class="math inline">\(\pi\)</span> from the set of all possible transformations <span class="math inline">\(\Pi\)</span> the probability that the smaller number is the same in both sets is equal to 0.25. Think that we are talking here about a probability and that it <strong>is not</strong> a rule. If the permutation choosen at random was the previously defined function <span class="math inline">\(\pi_X\)</span> then we would have, <span class="math inline">\(\min\pi_X(A)=\min\{2,3,1\}=1\)</span> that is not the same value as <span class="math inline">\(\min\pi_X(B)=\min\{5,2\}=2\)</span>.</p>
+<h3 id="hashing-functions">Hashing functions</h3>
+<p>Defining a random ordering for all the elements of a universe is costly. We have to maintain in memory the tables we saw for the vowels and that can not be practical when the universe of objects is large. So instead of maintaining the explicit random permutation we use the implicit permutation that hashing functions with good properties give us. The good properties we need is that the probability of collision in the universe is low because a random permutation is a 1 to 1 relationship between elements and positions and thus collisions in the hashing function would break this property.</p>
+<p>From now on, I’m going to assume that every universe we need to work with is smaller than the range of integers and thus restrict all the derivations to integer since every set and ordering could be mapped to the natural integer ordering (<span class="math inline">\([0..2^{32}]\)</span>).</p>
+<p>Possible hashing functions for integers could be:</p>
+<ul>
+<li><p>Use the <a href="http://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function">FNV-1</a> hashing function of the string representation of your integer. This has the advantage that naturally deals with hashing sets of integers by means of concatenating their string  representations.</p></li>
+<li><p>Use a pseudo-random number generator by picking a large prime number, say <span class="math inline">\(p=2147483647\)</span> and a set of coefficients <span class="math inline">\(\{a_i,b_i\}\)</span> such our hashing functions are defined as <span class="math inline">\(\pi_{i} = (a_i x + b_i) \% p\)</span></p></li>
+</ul>
+<p>In this post we will use the second kind of functions expresed in this Haskell code:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">p ::</span> <span class="dt">Int</span>
+p<span class="fu">=</span><span class="dv">2147483647</span> 
+
+<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
+coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
+
+<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
+hashFuncs <span class="fu">=</span> go coefs
+  <span class="kw">where</span>
+    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
+                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest </code></pre></div>
+<p>So, given a hashing function, which is the minimum hash over a given set? This code gives you that result</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
+minHash f <span class="fu">=</span> foldl' hashAndMin maxBound
+  <span class="kw">where</span>
+    hashAndMin a b <span class="fu">=</span> min a (f b)</code></pre></div>
+<h3 id="shingles">Shingles</h3>
+<p>OK, now you want to compare two sets, <em>A</em> and <em>B</em> to see how similar they are. The similarity measure here will be the number of items they both share, the Jackard coefficient. The time complexity of the set intersection is <span class="math inline">\(O(n+m)\)</span> if you first build a Hash Map and then query it with the second set for existence. If both sets are already sorted you can compare them in <span class="math inline">\(O(n)\)</span> <span class="math inline">\(O(m+n\log n+ m\log m)\)</span>.</p>
+<p>Can you compare them faster? Yes, but only if you want to trade accuracy. The property in the probability formula at the beginning of the post states that with probability the Jackard coefficient the min hashes of the two sets will be equal. That means that if we take <em>r</em> different hashing functions (permutations) and we name <em>s</em> the Jackard coefficient between the tow sets, the probability that all <em>k</em> hashes of each set are equal is <span class="math inline">\(s^r\)</span>. Since this is a collection of Bernoulli trials, the distribution of having <em>k</em> min hashes equal in both sets follows a Binomial distribution with density probability function equal to:</p>
+<p><span class="math display">\[f(k;r,s)= {r \choose k}s^k(1-s)^{r-k}\]</span></p>
+<p>It is known that a random variable distributed according to the binomial distribution, <span class="math inline">\(X \sim B(r,s)\)</span> has <span class="math inline">\(E[X]=rs\)</span>, so a good estimator of <span class="math inline">\(s\)</span> would be to divide the number of matches by the number of hashing functions. This would give you the estimated value of the Jackard coefficient. But before comparing two fingerprints we have to compute them:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
+shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]</code></pre></div>
+<p>The shingle function gives us a set of <em>c</em> fingerprints of our original big set of numbers.</p>
+<p>So let’s see it in action. Imagine that we want to compute the Jackard coefficient between the bag of letters in the phrase <em>Humpty Dumpty sat on a wall</em> and <em>Humpty Dumpty had a great fall</em>. First let’s compute the Jackard coefficient according to the definition</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Data.List</span>
+<span class="kw">import </span><span class="dt">System.Random</span>
+<span class="kw">import </span><span class="dt">Data.Char</span>
+<span class="kw">import </span><span class="dt">Data.List</span>
+
+phrase1<span class="fu">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span>
+phrase2<span class="fu">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span>
+mkSet <span class="fu">=</span> nub <span class="fu">.</span> filter isAlpha <span class="fu">.</span> map toLower
+<span class="co">-- Set 1 is the collection of letters in the first phrase</span>
+<span class="co">-- &quot;humptydsaonw&quot;</span>
+set1 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span>
+<span class="co">-- Set 2 is the collection of letters in the second phrase</span>
+<span class="co">-- &quot;humptydagrefl&quot;</span>
+set2 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span>
+           
+jackard <span class="fu">=</span> a<span class="fu">/</span>b
+  <span class="kw">where</span>
+    a <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
+    b <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
+    
+<span class="ot">p ::</span> <span class="dt">Int</span>
+p<span class="fu">=</span><span class="dv">2147483647</span> 
+
+<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
+coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
+
+<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
+hashFuncs <span class="fu">=</span> go coefs
+  <span class="kw">where</span>
+    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
+                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest 
+
+<span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
+minHash f <span class="fu">=</span> foldl' hashAndMin maxBound
+  <span class="kw">where</span>
+    hashAndMin a b <span class="fu">=</span> min a (f b)
+
+<span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
+shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]
+
+shingles1 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="fu">..</span>]
+shingles2 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="fu">..</span>]
+
+jackard2 <span class="fu">=</span> map approxJackard shingles
+  <span class="kw">where</span> 
+    shingles <span class="fu">=</span> zip shingles1 shingles2
+<span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span>
+    approxJackard (as,bs) <span class="fu">=</span> <span class="kw">let</span> pairs <span class="fu">=</span> zip as bs
+                                matches <span class="fu">=</span> filter (\(a,b) <span class="ot">-&gt;</span> a <span class="fu">==</span> b) pairs
+                                num <span class="fu">=</span> fromIntegral <span class="fu">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span>
+                                den <span class="fu">=</span> fromIntegral <span class="fu">$</span> length<span class="ot"> as ::</span> <span class="dt">Double</span>
+                            <span class="kw">in</span> num<span class="fu">/</span>den</code></pre></div>
+<p>If we plot <em>jackard2</em> we have an approximation based on the number of shingles:</p>
+<div class="figure">
+<img src="ApproxJackard.png" />
+
+</div>
+<h3 id="lost">Lost?</h3>
+<p>OK, let me summarize a little bit.</p>
+<ol style="list-style-type: decimal">
+<li>You came here because you have a problem of comparing and object against N different objects and N is very large. </li>
+<li>The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.</li>
+<li>You want a cheap procedure for computing 2)</li>
+</ol>
+<p>So the solution is to transform each object into a set of _c _different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
+<p>Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number <em>c</em>. But we still have to perform N comparisons against the N individuals in the population. Wouldn’t it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That’s possible with the use of <strong>bands</strong> but since this post is already very long, I’ll leave that for another post.</p>
+<h4 id="references">References</h4>
+<ol style="list-style-type: decimal">
+<li><p><a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.8215">Minwise independent permutations</a> The paper with the math that demonstrates the link between the Jackard Coefficient and the probability.</p></li>
+<li><p><a href="http://infolab.stanford.edu/~ullman/mmds.html">Chapter 3</a> of the excellent book “Minning massive datasets”</p></li>
+</ol>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

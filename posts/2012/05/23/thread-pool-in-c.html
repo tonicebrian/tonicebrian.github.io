@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Thread pool in C++</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Thread pool in C++
+  </h2>
+  <p class="blog-post-meta">
+    Posted on May 23, 2012
+    
+  </p>
+  <div class="figure">
+<img src="BoostLogo.png" />
+
+</div>
+<p>I needed to convert user ids spread across a lot of files into a fixed range [0..N] where N was the total number of Ids in the dataset. First I though that since those files came from a Hadoop cluster I should write a MR job to do the task. But since recoding ids needs a “central authority” giving unique ids without collision, MapReduce wasn’t an option because MR thinks about each record as independent of the rest of records, so coordinating the assignment of ids is both difficult and unnatural in MapReduce. The naïve approach is to create a counter, loop through all the ids and whenever an id is not in the dictionary, use the counter as the new translation. See the pseudocode</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="bu">int</span> counter <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>
+<span class="cf">for</span> <span class="bu">id</span> <span class="op">in</span> ids:
+    <span class="cf">if</span> <span class="bu">id</span> <span class="op">not</span> <span class="op">in</span> <span class="bu">dict</span>:
+        <span class="bu">dict</span>[<span class="bu">id</span>] <span class="op">=</span> counter
+        counter<span class="op">++</span>
+    <span class="bu">print</span> <span class="bu">dict</span>[i]</code></pre></div>
+<p>But then you are wasting precious cores that could help you. My machine has eight cores, so for a task that runs in aprox 60 minutes, so after investing time in going beyond the naïve approach, I’m able to lower it to 10 minutes. That means that I can run tests 6 times faster, it will pay off.</p>
+<h3 id="lookup-table">Lookup table</h3>
+<p>So the first thing to do is to create a thread safe Hash Map. Most of the time the access will be for reading a value and less frequently for updating the data structure (in my problem I perform 250 reads for each write) so this scenario is ideal for a <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers-writer lock</a>. I use the Boost Thread library with its boost::shared_mutex for getting the multiple access functionality. The class is something like this</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">using</span> <span class="kw">namespace</span> boost;
+<span class="kw">class</span> LookupTable {
+    <span class="kw">private</span>:
+        <span class="kw">typedef</span> std::unordered_map&lt;<span class="dt">int</span>,<span class="dt">unsigned</span> <span class="dt">int</span>&gt; HashMap;
+        HashMap dict;
+        <span class="dt">unsigned</span> <span class="dt">int</span> counter;
+        shared_mutex m_mutex; 
+    <span class="kw">public</span>:
+        LookupTable(){};
+        <span class="dt">unsigned</span> <span class="dt">int</span> translate(<span class="dt">int</span> number){
+            boost::shared_lock&lt;boost::shared_mutex&gt; lck(m_mutex);
+            <span class="dt">unsigned</span> <span class="dt">int</span> result;
+            HashMap::iterator elem = dict.find(key);
+            <span class="kw">if</span>( elem == dict.end()){
+               lck.unlock();
+               boost::upgrade_lock&lt;boost::shared_mutex&gt; uLck(m_mutex);
+               boost::upgrade_to_unique_lock&lt;boost::shared_mutex&gt; uuLck(uLck);
+               dict[key] = counter;
+               result = counter;
+               counter++;
+            } <span class="kw">else</span> {
+               result = elem-&gt;second;
+            }
+            <span class="kw">return</span> result;
+        }
+};</code></pre></div>
+<h3 id="thread-pool">Thread pool</h3>
+<p>Once we have the thread safe data structure in place, we want to create a thread pool were we can send tasks. The thread pool will be responsible to assign each task to the next free thread. The reason for having a thread pool instead of spawning as many threads as tasks is two fold, first, the amount of work I can do is bounded by the speed at which I’m able to read from disk, so throwing more threads doesn’t seem to help here. Second, since all the threads must query the lookup table, if there are lots of them the synchronization (mutex locking and unlocking) could become heavier than the work per thread becoming a bottleneck.</p>
+<p>Boost provides a nice thread pool by using the Boost::Asio library. I came to this pattern of usage by reading <a href="http://mostlycoding.blogspot.com.es/2009/05/asio-library-has-been-immensely-helpful.html">this</a> and <a href="http://think-async.com/Asio/Recipes">this</a> but it happens that they are wrong in a subtle detail. As they are written, they only run one task per thread and then the io_service is stopped. After scratching my head for a couple of hours I reread the official documentation and the solution is explained <a href="http://www.boost.org/doc/libs/1_49_0/doc/html/boost_asio/reference/io_service.html">at them botom of the page</a>. So the key issue is to destroy explicitly the work variable that we created for the io_service to not end too early. To accomplish that just embed the work in a smart pointer std::auto_ptr and reset it when necessary, the reset will call the work destructor.</p>
+<p>So the main program would be something like this</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Thread pool</span>
+asio::io_service io_service;
+boost::thread_group threads;
+auto_ptr&lt;asio::io_service::work&gt; work(<span class="kw">new</span> asio::io_service::work(io_service)); 
+
+<span class="co">// Spawn enough worker threads</span>
+<span class="dt">int</span> cores_number = boost::thread::hardware_concurrency(); 
+<span class="kw">for</span> (std::size_t i = <span class="dv">0</span>; i &lt; cores_number; ++i){
+    threads.create_thread(boost::bind(&amp;asio::io_service::run, &amp;io_service));
+}
+<span class="co">// Post the tasks to the io_service</span>
+<span class="kw">for</span>(vector&lt;string&gt;::iterator it=filenames.begin();it!=filenames.end();it++){
+   io_service.dispatch(std::move(translator(*it,dict)));
+}
+work.reset();</code></pre></div>
+<p>and the code for the worker (sketched)</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> translator {
+    translator(string filename, LookupTable&amp; dict)
+        : m_filename(filename),m_dict(dict)
+    {
+    }
+    <span class="dt">void</span> <span class="kw">operator</span>()(){
+        <span class="co">// DO YOUR WORKER ACTIVITY HERE</span>
+        ...
+        <span class="kw">return</span>;
+    }
+}</code></pre></div>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

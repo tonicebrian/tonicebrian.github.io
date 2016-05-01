@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - RecSys 2013</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    RecSys 2013
+  </h2>
+  <p class="blog-post-meta">
+    Posted on November  6, 2013
+    
+  </p>
+  <div class="figure">
+<img src="AcmRecsys-300x42.png" />
+
+</div>
+<p>It has been 3 years since I attended my last RecSys and last week I went again to <a href="http://recsys.acm.org/recsys13/">that conference</a> in Hong Kong. I came back home with lots of useful insights although to get those gems I had to go through lots of boring to death presentations. Hey guys, presenting to an audience doesn’t mean cut and pasting from your latex article directly into your beamer presentation. You have to think about how to communicate to an audience. And don’t tell me it’s about algorithms and complex mathematics, so it was <a href="http://dl.acm.org/citation.cfm?id=2507160">Harald Steck’s</a> from Netflix and it was very pedagogical. Next year make sure you think in your audience before reporting your research.</p>
+<p>This is my personal and biased review of the conference. It’s mainly what I found interesting and what it could be easily deployed at my current employer, <a href="http://www.softonic.com">Softonic</a>.</p>
+<p>On Saturday we had an excellent tutorial about <a href="http://www.slideshare.net/kerveros99/learning-to-rank-for-recommender-system-tutorial-acm-recsys-2013">Learning To Rank for Recommender Systems</a> by <a href="https://twitter.com/alexk_z">Alex</a>, <a href="https://twitter.com/LinasTw">Linas</a>and <a href="https://twitter.com/yueshi_nl">Shi</a>. Here I’m completely biased because I’ve worked with them and I know how good they are, but this tutorial was really interesting and full of stuff. I recommend it for a very good introduction to this complex topic.</p>
+<div class="figure">
+<img src="calle-hong-kong-small-258x300.png" />
+
+</div>
+<p>For me the most interesting session of the conference was the workshop on <a href="http://graphlab.org/lsrs2013/program/#LSRS2013">Large Scale Recommenders</a>. There was an <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_13.pdf">interesting presentation</a> about how to use Multi-armed bandits for recommending videos in a popular Dutch multimedia site. This talk was full of practical information about the technological stack for deploying bandits at scale. Some guys from eBay where presenting how do <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_14.pdf">they recommend items</a> in a domain where users are open to sell whatever they want and describe it free form. They were creating fine grained clusters based mainly on the search queries. The idea was to create semantically consistent cluster of items. They identified different use cases pre-purchase and post-purchase and it seemed that this cluster solution was working very well. For us in the app domain, this also makes sense, when browsing you are interested in similar applications but after a download you are interested in complementary apps not apps in the same niche. <a href="https://twitter.com/kyrpov">Aapo Kyrölä</a> gave two excellent talks about <a href="http://www.slideshare.net/akyrola/largescale-recommendation-systems-on-just-a-pc">GraphChi</a>and about <a href="www.slideshare.net/akyrola/drunkardmob-billions-of-random-walks-on-just-a-pc">Personalized PageRank</a>for Big Data. Read them. Funny comparisons about how much it took for his laptop against giant Hadoop clusters. Main take aways, “Before doing anything, think twice” and “Don’t follow the hype, even GraphChi’s hype”.</p>
+<p>Although I was in different sessions there were other presentations during the weekend that generated Twitter action, like the <a href="http://www.slideshare.net/d0nut/open-recommendation-platform">keynote</a>in the <a href="https://sites.google.com/site/newsrec2013/">News Recommender Systems workshop</a> and the tutorial on <a href="http://www.slideshare.net/anmolbhasin/tutorial-on-people-recommendations-in-social-networks-acm-recsys-2013hong-kong">people recommendations</a> from Linkedin.</p>
+<p>From the Monday sessions I liked two papers trying to introduce diversity in the recommendations. The first <a href="http://dl.acm.org/citation.cfm?id=2507165">Trading-off Among Accuracy, Similarity, Diversity, and Long-tail: A Graph-based Recommendation Approach</a> from <a href="http://www.baidu.com/">Baidu</a> where you can model your costs for multi targeted objectives and a random walk in the graph provides the recommendations. The second paper was <a href="http://research.google.com/pubs/pub41535.html">Nonlinear Latent Factorization by Embedding Multiple User Interests</a> from Google. Here the user is described as a set of latent vectors each one describing one of the user’s interests.</p>
+<p>On Tuesday, the Microsoft’s paper, <a href="http://dl.acm.org/citation.cfm?id=2507168">Xbox Movies Recommendations: Variational Bayes Matrix Factorization with Embedded Feature Selection</a> from <a href="http://www.eng.tau.ac.il/~noamk/">Noam Koenigstein</a> was very interesting and I think we could use a similar approach for recommending software at <a href="http://www.softonic.com/">Softonic</a>. Here a probabilistic graphical model was proposed for an scenario of binary implicit feedback enriched with metadata in the form of tags. From this same author I discovered in the Large Scale Recommenders workshop the work <a href="http://www.eng.tau.ac.il/~noamk/papers/fp093-koenigstein.pdf">he has been doing</a> on using Matrix Factorization results in real time. This paper was the perfect companion to the poster he presented about <a href="http://www.eng.tau.ac.il/~noamk/papers/item_based_recsys_2013.pdf">Item-Oriented recommendations</a>. In the afternoon there was the paper <a href="http://dl.acm.org/citation.cfm?doid=2507157.2507188">Rating Support Interfaces to Improve User Experience and Recommender Accuracy</a> that focused on improving UI for recommenders for helping in eliciting true preferences. Very interesting.  Also of interest were <a href="http://www.slideshare.net/AmitSharma315/pairwise-learning-experiments-with-community-recommendation-on-linkedin">Pairwise learning in recommendations of communities</a> from Linkedin and <a href="http://www.cs.utexas.edu/~inderjit/public_papers/app_recommendation_recsys13.pdf">Which App Will You Use Next</a> that proposed a recommender system that predicts which app has higher probability of being used next based on your past behavior. It would be very interesting to pilot a widget for <a href="http://softonic-moba.softonic.com/">Moba</a>.</p>
+<p>The last day of the conference, had the Industry Session with lots of gems, like Huawei App Store using Deep Neural Networks for recommendations so they don’t spend time doing feature engineering. <a href="http://www.alibaba.com/">Alibaba</a> told that Diversity and Complementary are worse for CTR but better for conversion, so watch your KPIs. <a href="http://www.tencent.com/index_e.shtml">Tencent</a>showed all the metadata for users and items they use and the distributed hybrid algorithm they use to deliver recommendations. For us in the western world, used to the Facebooks and Googles, seeing the technology the Chinese companies are using/developing was a big surprise.</p>
+<div class="figure">
+<img src="neon_hong_kong-small-225x300.png" />
+
+</div>
+<p>The best paper award was <a href="http://www.csie.ntu.edu.tw/~cjlin/papers/libmf.pdf">A Fast Parallel SGD for Matrix Factorization in Shared Memory Systems</a>, hardcore algorithmic approach but far from my day to day routine. I’ve mentioned before the  paper about <a href="http://dl.acm.org/citation.cfm?id=2507160">Rating-prediction and Ranking</a> from Netflix that addresses the selection bias (you are more likely to rate highly/low valued items but nothing in between) as a related sub-problem. By modeling the decision to rate you gain insight on all the unknown ratings.</p>
+<p>The last session about Scalability was the most interesting with all the papers in my ToRead list. <a href="http://dl.acm.org/citation.cfm?id=2507169">Using maximum coverage to optimize recommendation systems</a> used well known algorithms of combinatorial optimization in order to select the set of items with maximum probability of conversion. In <a href="http://dl.acm.org/citation.cfm?id=2507189">Efficient top-n recommendation for very large scale binary rated datasets</a> they presented a large scale matrix factorization algorithm for implicit datasets. This guys presented the extension to the algorithm that won the <a href="http://www.kaggle.com/c/msdchallenge">Million Song contest in Kaggle</a> so this paper must be read carefully. In <a href="http://ssc.io/wp-content/uploads/2011/12/sys024-schelter.pdf">Distributed Matrix Factorization with MapReduce using a series of Broadcast-Joins</a> it was exposed a distributed Alternating Least Squares (ALS) approach to Matrix Factorization that is going to be included in <a href="http://mahout.apache.org/">Mahout</a>. They also taught me about a toolkit for generating synthetic data, <a href="https://github.com/TU-Berlin-DIMA/myriad-toolkit/wiki">Myriad</a>,  something I have to research more carefully.</p>
+<p>And that was it!! I had a very good time and glad to meet lot of people I admire in person. Hopefully see you next year!!</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

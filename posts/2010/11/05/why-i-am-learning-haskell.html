@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Why I am learning Haskell</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Why I am learning Haskell
+  </h2>
+  <p class="blog-post-meta">
+    Posted on November  5, 2010
+    
+  </p>
+  <div class="figure">
+<img src="HaskellLogo.png" />
+
+</div>
+<p>I can not remember exactly when and why I heard of <a href="http://www.haskell.org/">Haskell</a> in the first time. What I can recall vividly is the moment when I decided that I was committed to learn the language. It happened when reading the article “<a href="http://www.paulgraham.com/avg.html">Beating the averages</a>” from <a href="http://en.wikipedia.org/wiki/Paul_Graham_(computer_programmer)">Paul Graham</a>. In this article, Paul Graham describes how he was coding in Lisp the software of his startup, an online store called ViaWeb that later was acquired by Yahoo and became Yahoo Store. He says that coding in Lisp was their main advantage against possible competitors. He even jokes about not worrying of competitors that where hiring Oracle or Java specialists, he knew they were doomed from then on. This article resonated inside me when I read it because at that time I was tinkering with the idea of starting a <a href="http://www.amazon.com/gp/product/1590596013?ie=UTF8&amp;tag=tonicebrianco-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=1590596013">Micro-ISV</a><img src="http://www.assoc-amazon.com/e/ir?t=tonicebrianco-20&amp;l=as2&amp;o=1&amp;a=1590596013" /> as a side project. Haskell was going to be for me what Lisp was for Paul Graham, the high level language able to increase the productivity of a solo programmer by several folds.</p>
+<p>On the other hand, learning Haskell is an stimulating intellectual task. Pure functional programming is something worth learning by itself. It will make you a better programmer even if you never happen to write a single functional line of code. Your imperative style will also improve. Like quiting smoking, Haskell is very easy to learn, I’ve learned it a lot of times. I started with a Spanish book, <a href="http://www.paraninfo.es/catalogo/9788497322775/RAZONANDO-CON-HASKELL--Un-curso-sobre-programacion-funcional">Razonando con Haskell</a>, that makes a very good job introducing the language but that fails blatantly from a pedagogical point of view when you get into monads and the design of programs. But then, <a href="http://book.realworldhaskell.org/">Real World Haskell</a> came out and IMHO it has helped to push forward Haskell into a real mainstream language. If you are planning to learn the language don’t forget to read also <a href="http://learnyouahaskell.com/">Learn You a Haskell for Great Good!</a> a high quality freely available Haskell book.</p>
+<p>More recently, and related to my current work, Haskell seems the perfect tool for writing <a href="http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/lang-parallel.html">parallel programs</a>. Haskell is <a href="http://measuringmeasures.com/blog/2010/1/15/learning-about-statistical-learning.html">recommended</a> by data scientists for doing real programming. Due to its pure functional nature, bugs are easier to spot in Haskell because the language design difficults introducing side effects that are so common in other languages. Haskell also supports esoteric concurrent constructs you haven’t seen in other programming languages like <a href="http://en.wikipedia.org/wiki/Software_transactional_memory">Software Transactional Memory</a>. But above all, pure code can be easily manipulated and reasoned about by other programs. That means that you, as Joe the programmer, can rely on the compiler for doing automatic parallelization. You can easily parallelize already functioning algorithms by just doing some code annotations, the compiler will do all the spawning and synchronization under the hood.</p>
+<p>In this vein, there is an under explored area that I’d like to learn more about, <a href="http://www.cs.cmu.edu/~scandal/cacm.html">Nested Data Parallelism</a>. Unless you have been living in a cave during the past years, the <a href="http://es.wikipedia.org/wiki/MapReduce">MapReduce</a> programming paradigm and its reference implementation <a href="http://hadoop.apache.org/">Hadoop</a> have taken the parallel world by storm. This new paradigm allows to process data volumes that were unthinkable some years ago. The MapReduce paradigm represents a pattern for parallelization called <strong>Flat Data Parallelism</strong>. This means that in these problems, data is more important than computation in contrast to usual scientific calculations where operations are the dominant factor. The <em>flat</em> word means that the problems that are best suited for this paradigm are those in which the data involved can easily be bucketed on equal sized bins and processed in parallel. MapReduce is the best tool for performing <a href="http://es.wikipedia.org/wiki/Extract,_transform_and_load">ETL</a> in a data warehouse, indexing the web like Google does, log mining, or image transformations. Huge amounts of independent data, processed on parallel tasks. But what happens when you have irregular data like trees or graphs? You can not partition the data into equally sized bins because you don’t know the size of each bin. For instance, imagine that you want to multiply a big sparse matrix with a vector (an operation that happens a lot in Recommender Systems using <a href="http://en.wikipedia.org/wiki/Collaborative_filtering">Collaborative Filtering</a>). Your first thought will be to split equally the rows in the matrix and send each bin to a thread or computing node, but because of the sparsity of the matrix, some rows are short while others are longer. That means that some bins take longer than others to compute introducing delays when the main program has to wait to gather the results. <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a> is an attempt to implement Nested Data Parallelism in the Haskell language itself. <a href="http://research.microsoft.com/en-us/people/simonpj/">Simont Peyton Jones</a> and other Haskell gurus are <a href="http://www.youtube.com/watch?v=NWSZ4c9yqW8">working hard</a> to explore this new kind of parallelism using the facilities of the language.</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

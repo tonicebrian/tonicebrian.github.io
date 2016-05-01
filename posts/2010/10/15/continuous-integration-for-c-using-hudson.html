@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Continuous Integration for C++ using Hudson</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Continuous Integration for C++ using Hudson
+  </h2>
+  <p class="blog-post-meta">
+    Posted on October 15, 2010
+    
+  </p>
+  <p>This post is about how to setup <a href="http://hudson-ci.org/">Hudson</a>for continuous integration (<a href="http://www.martinfowler.com/articles/continuousIntegration.html">CI</a>) of a C++ project. This is mainly for my own (future) reference and I expect that it will be continuously improved (pun intended) in the future.</p>
+<h2 id="preparing-the-machine-that-will-host-the-ci"><strong>Preparing the machine that will host the CI</strong></h2>
+<p>Hudson will be hosted in a virtualized Linux server. The OS will be <a href="http://www.ubuntu.com/desktop/get-ubuntu/download">Ubuntu 10.04</a> because is the distribution I am most familiar with and because it is a long term support (LTS) version of the distribution. It is expected that this version will be stable enough and that bugs will be addressed and resolved quickly. There will be no physical machine where to install Ubuntu. I will install it on a Virtual Machine created using the <a href="http://www.virtualbox.org/">VirtualBox</a> virtualization software. Setting up a virtual machine using VirtualBox is beyond the scope of this post, I’ll assume that you have successfully installed Ubuntu and that it is up and running. If you are going to start this task right now just make sure you reserve 1G of memory for the virtual machine since the default 512M seems that is not enough for running the Tomcat server.</p>
+<p>At this point you should have a newly installed Ubuntu 10.04 up and running. The next step is to install all the necessary software. It involves:</p>
+<ul>
+<li>Sun’s Java SDK, to run the Tomcat server</li>
+<li>Tomcat 6, it hosts Hudson</li>
+<li><a href="http://mercurial.selenic.com/">Mercurial</a>, the example project is hosted on <a href="http://bitbucket.org/ancechu/cmake_sample_project">Bitbucket.org</a> but you can use whichever</li>
+<li><a href="http://www.cmake.org/">CMake</a>, the multiplatform build system used in the example</li>
+<li><a href="http://sourceforge.net/apps/mediawiki/cppunit/index.php?title=Main_Page">CppUnit</a>, testing library for those beautiful unit tests</li>
+<li><a href="http://sourceforge.net/projects/cccc/">CCCC</a>, application to calculate cyclomatic complexity of our code</li>
+<li><a href="http://ltp.sourceforge.net/coverage/lcov.php">lcov</a>, to produce nice code coverage reports of our unit tests</li>
+<li><a href="http://valgrind.org/">valgrind</a>, that checks memory leaks in our code.</li>
+</ul>
+<p>First append the repository where the Java SDK can be found</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> add-apt-repository <span class="st">&quot;deb http://archive.canonical.com/ lucid partner&quot;</span>
+<span class="kw">sudo</span> apt-get update</code></pre></div>
+<p>and now, install the packages</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install tomcat6 tomcat6-admin sun-java6-jdk mercurial cmake libcppunit-dev build-essential cccc lcov valgrind</code></pre></div>
+<h2 id="installing-and-configuring-tomcat-and-hudson">Installing and configuring Tomcat and Hudson</h2>
+<p>Just some standard Tomcat configuration here. Change tomcat’s user password to any you can remember.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> passwd tomcat6</code></pre></div>
+<p>Download Hudson</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">cd</span> /tmp
+<span class="kw">sudo</span> -u tomcat6 wget http://hudson-ci.org/latest/hudson.war</code></pre></div>
+<p>Edit the file with tomcat’s users and create an administrator.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> vim /etc/tomcat6/tomcat-users.xml</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode xml"><code class="sourceCode xml"><span class="kw">&lt;tomcat-users&gt;</span>
+  <span class="kw">&lt;role</span><span class="ot"> rolename=</span><span class="st">&quot;tomcat&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;role</span><span class="ot"> rolename=</span><span class="st">&quot;role1&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;user</span><span class="ot"> username=</span><span class="st">&quot;tomcat&quot;</span><span class="ot"> password=</span><span class="st">&quot;tomcat&quot;</span><span class="ot"> roles=</span><span class="st">&quot;tomcat&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;user</span><span class="ot"> username=</span><span class="st">&quot;both&quot;</span><span class="ot"> password=</span><span class="st">&quot;tomcat&quot;</span><span class="ot"> roles=</span><span class="st">&quot;tomcat,role1&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;user</span><span class="ot"> username=</span><span class="st">&quot;role1&quot;</span><span class="ot"> password=</span><span class="st">&quot;tomcat&quot;</span><span class="ot"> roles=</span><span class="st">&quot;role1&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;role</span><span class="ot"> rolename=</span><span class="st">&quot;manager&quot;</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;user</span><span class="ot"> username=</span><span class="st">&quot;admin&quot;</span><span class="ot"> password=</span><span class="st">&quot;admin1&quot;</span><span class="ot"> roles=</span><span class="st">&quot;manager&quot;</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;/tomcat-users&gt;</span></code></pre></div>
+<p>And now, start the tomcat server</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> chown -R tomcat6:tomcat6 /usr/share/tomcat6
+<span class="kw">sudo</span> /etc/init.d/tomcat6 start</code></pre></div>
+<p>And now, to deploy Hudson, open a browser and go to this URL <a href="http://localhost:8080/manager/html"><code>http://localhost:8080/manager/html</code></a>. Use the admin user you previously created and in the dashboard you are seeing now, scroll down to the <strong>War file to deploy</strong> and select the hudson war that you downloaded in the /tmp directory. Deploy and if everything goes OK, Hudson will be installed and you can access it in this URL <a href="http://localhost:8080/hudson" class="uri">http://localhost:8080/hudson</a> Just for the curious of you, all the intermediate files and directories that Hudson uses go into ﻿<code>/usr/share/tomcat6/.hudson</code></p>
+<p>Now, you have Hudson up and ready, go to <a href="http://localhost:8080/hudson" class="uri">http://localhost:8080/hudson</a> and navigate to the Hudson plugins page (<code>Manage Hudson -&gt; Manage Plugins -&gt; Available</code>) and select and install the following plugins:</p>
+<ul>
+<li>Mercurial plugin</li>
+<li>CppUnit plugin</li>
+<li>CCCC plugin</li>
+<li>HTML publisher plugin</li>
+<li>Python Plugin</li>
+</ul>
+<p>Install them and let Hudson to restart itself.</p>
+<h2 id="configure-the-project">Configure the project</h2>
+<p>Time to monitor an existing project for continuous integration. Here, we will use a sample project described in a previous <a href="http://www.tonicebrian.com/2010/03/22/cmake-project-skeleton/">post</a>. So, go to <a href="http://localhost:8080/hudson" class="uri">http://localhost:8080/hudson</a> and click on <code>New Job</code></p>
+<ol style="list-style-type: decimal">
+<li>Select a name for your project (<code>Calc</code>) and chose the option <strong>Build a free-style software project</strong></li>
+<li>Put whatever description you want. Check also the <strong>Discard old builds</strong>, CI is about monitoring your actual project health not about having a build historical. I usually put 50 in the <strong>Max # of builds to keep</strong></li>
+<li>In the** Source Code Management** section, select <strong>Mercurial</strong> as your VCS and put <code>http://bitbucket.org/ancechu/cmake_sample_project</code> as the** Repository URL** in the branch put, default.</li>
+<li>In the <strong>Build Triggers </strong>section, I like almost instant reaction to a build break. Hudson continuously polls the Mercurial server for changes, and when one happens it checkouts and builds the entire project. Select <strong>Poll SCM</strong> and in the Schedule write *** * * * * **. It means poll every single minute the repository.</li>
+<li><p>Ok, so here are the specific steps to build your project:</p>
+<ol style="list-style-type: decimal">
+<li><p>First <strong>Add Build Step </strong>and select <strong>Execute shell script</strong>. The commands are:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">mkdir</span> -p Release
+<span class="kw">cd</span> Release
+<span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=Release ..
+<span class="kw">make</span></code></pre></div></li>
+<li><p>Add another <strong>Shell Build Script</strong> step that is intended to create the unit test coverage reports. In order to get meaningful reports, the executables are compiled with debugging info included. lcov is used to create meaningful reports. Check that there is one line that removes coverage of uninteresting sources (those under /usr/include)</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co"># Run and execute tests with coverage info</span>
+
+<span class="kw">mkdir</span> -p Debug
+<span class="kw">mkdir</span> -p coverage
+<span class="kw">cd</span> Debug
+<span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=True ..
+<span class="kw">make</span>
+<span class="kw">cd</span> ..
+<span class="kw">lcov</span> -d Debug/CMakeFiles/calc.dir/src/main/cpp -d Debug/CMakeFiles/UnitTester.dir/src/test/cpp --zerocounters
+<span class="kw">Debug/UnitTester</span>
+<span class="kw">lcov</span> -d Debug/CMakeFiles/calc.dir/src/main/cpp -d Debug/CMakeFiles/UnitTester.dir/src/test/cpp --capture --output-file coverage/calc.info
+<span class="kw">lcov</span> -r coverage/calc.info <span class="st">&quot;/usr/include/*&quot;</span> -o coverage/calc.info
+<span class="kw">genhtml</span> -o coverage coverage/calc.info</code></pre></div></li>
+<li><p>Again, another <strong>Execute shell</strong> step for creating C++ metrics</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">cccc</span> <span class="kw">`find</span> src -name *.cpp<span class="kw">`</span></code></pre></div></li>
+<li><p>This step is a <strong>Execute shell</strong> step with the goal of creating a report about the possible memory leaks when executing our tests</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">valgrind</span> --xml=yes --xml-file=valgrind.xml Release/UnitTester</code></pre></div></li>
+<li><p>The last step is the execution of a Python script that converts the XML output from valgrind to XML output that resembles the xUnit output schema. The idea is to treat memory leaks or other memory related problems as failed unit tests. This is a quick fix for integrating Valgrind in Hudson, if you know a better way please let me know. Again, <strong>Add Build Step</strong> but this time <strong>Python script</strong></p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> xml.etree.ElementTree <span class="im">as</span> ET
+doc <span class="op">=</span> ET.parse(<span class="st">'valgrind.xml'</span>)
+errors <span class="op">=</span> doc.findall(<span class="st">'//error'</span>)
+
+out <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;valgrindTestResults.xml&quot;</span>,<span class="st">&quot;w&quot;</span>)
+out.write(<span class="st">'&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+out.write(<span class="st">'&lt;testsuite name=&quot;memcheck&quot; tests=&quot;1&quot; errors=&quot;0&quot; failures=&quot;'</span><span class="op">+</span><span class="bu">str</span>(<span class="bu">len</span>(errors))<span class="op">+</span><span class="st">'&quot; skip=&quot;0&quot;&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+out.write(<span class="st">'    &lt;testcase classname=&quot;ValgrindMemoryCheck &quot; </span><span class="ch">\n</span><span class="st">'</span>)
+out.write(<span class="st">'              name=&quot;Memory check&quot; time=&quot;0&quot;&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+<span class="cf">for</span> error <span class="op">in</span> errors:
+	kind <span class="op">=</span> error.find(<span class="st">'kind'</span>)
+	what <span class="op">=</span> error.find(<span class="st">'what'</span>)
+	<span class="cf">if</span>  what <span class="op">==</span> <span class="va">None</span>:
+		what <span class="op">=</span> error.find(<span class="st">'xwhat/text'</span>)
+
+	out.write(<span class="st">'        &lt;error type=&quot;'</span><span class="op">+</span>kind.text<span class="op">+</span><span class="st">'&quot;&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+	out.write(<span class="st">'            '</span><span class="op">+</span>what.text<span class="op">+</span><span class="st">'</span><span class="ch">\n</span><span class="st">'</span>)
+	out.write(<span class="st">'        &lt;/error&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+out.write(<span class="st">'    &lt;/testcase&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+out.write(<span class="st">'&lt;/testsuite&gt;</span><span class="ch">\n</span><span class="st">'</span>)
+out.close()</code></pre></div></li>
+</ol></li>
+</ol>
+<p>I have created a <a href="https://bitbucket.org/ancechu/valgrind-reports-to-xunit">Mercurial project</a>where improvements to this script will be checked in. Please contribute!!</p>
+<p>Update: I’ve included in the code base the XSL that is mentioned in the comments. Use whatever approach is more useful to you.</p>
+<ol start="6" style="list-style-type: decimal">
+<li><p>The final step is to run the Post build actions that create the visual reports of the build process. Check the following items</p>
+<ol style="list-style-type: decimal">
+<li>Check the <strong>Publish JUnit test result report </strong>checkbox and introduce in <em>Test Report XMLs</em> this string **/valgrindTestResults.xml . This tells Hudson to look for this specific file and include it as part of the result set.</li>
+<li>Next action is to select <strong>Publish HTML reports</strong> in order to show in the reports about Code Coverage and Cyclomatic Complexity. The exact values are:<img src="HTMLReports.png" /></li>
+<li>Add also the test results from CppUnit checking <strong>Publish testing tools result report</strong> and inserting in the text box <code>**/cpptestresults.xml</code></li>
+<li>The last step is to create a widget for reporting a summary of the Cyclomatic complexity checking the <strong>Publish CCCC report</strong> and setting the main file to <code>.cccc/cccc.xml</code></li>
+</ol></li>
+</ol>
+<p>Save this options page and you are done!! Keep in mind that some reports are not displayed until some builds are in place. Any comment or improvement about the overall procedure is welcome. Enjoy it ;)</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - CMake project skeleton</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    CMake project skeleton
+  </h2>
+  <p class="blog-post-meta">
+    Posted on March 22, 2010
+    
+  </p>
+  <p>When creating a new project from scratch, there are a lot of tasks that are repetitive and uninteresting. Creating makefiles, defining the project structure, etc… Usually you rely on your IDE to perform those tasks when you are on your own when creating CMake projects. I’ve created a simple project skeleton to speed up the setup of new C++ projects.</p>
+<p><strong>Sample project</strong></p>
+<p>You can access the project <a href="http://bitbucket.org/ancechu/cmake_sample_project/overview/">here</a>. Just clone it and start the hacking.</p>
+<p><strong>Directory structure</strong></p>
+<p>Recently I have been working with Maven for Java development. I love the idea of Convention over Configuration (<a href="http://en.wikipedia.org/wiki/Convention_over_configuration">CoC</a>). When coding, there are zillions of things you have to put in your head, why should you waste your precious brain cycles remembering in which folder are those configuration files your colleague created last week. You agree on an <strong>arbitrary</strong> convention and you stick to it. Suddenly some neurons are freed and you can use them to learn the next framework. When organizing my folders I have followed the Maven conventions, one big CMakeLists.txt file in the root directory, a src folder divided into main and test having each of them subfolders on a “per-technology” basis. Object files and executables go to a separated folder. In the figure you can see the directories structure.</p>
+<div class="figure">
+<img src="CMakeProjectStructure.png" />
+
+</div>
+<p><strong>Unit testing</strong></p>
+<p>In order to provide some functionality, the project creates a dynamic library with the functionality of a simple calculator. To test that this functionality works properly, a unit test has been created using the CppUnit framework. The project builds a test driver called UnitTester. This executable can be run without parameters and then it runs all the tests that were previously registered using the ﻿﻿﻿CPPUNIT_TEST_SUITE_REGISTRATION. If you want to run only a given set you specify it in the command line, useful for testing the test you are working on.</p>
+<p>I don’t use the CTest functionality in this project and so, the _make test _command does not work. I did this because I preferred to have an executable in the root binary folder instead of buried in the folder structure. Some situations like running Valgrind to check for memory leaks or controlling the exact location of the executable compensate the change.</p>
+<p><strong>Packaging</strong></p>
+<p>In the <em>cmake</em> folder there are two scripts for defining the packaging. You can create a RPM or a DEB only by (un)commenting the corresponding lines in the root CMakeLists.txt.</p>
+<p><strong>Future development</strong></p>
+<p>I plan to continue updating this project skeleton in the future. Some issues that I will surely improve will be:</p>
+<ul>
+<li><p>Find a satisfying solution for running the tests using the CTest philosophy.</p></li>
+<li><p>Include the code that finds common libraries like Boost <strong>Done! 2010-05-27</strong></p></li>
+<li><p>Given that CMake is a crossplatform build environment, check that this project can run seamlessly in Windows or Mac, currently only tested in Linux.</p></li>
+</ul>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

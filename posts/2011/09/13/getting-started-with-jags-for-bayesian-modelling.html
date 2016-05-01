@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Getting started with JAGS for Bayesian Modelling</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Getting started with JAGS for Bayesian Modelling
+  </h2>
+  <p class="blog-post-meta">
+    Posted on September 13, 2011
+    
+  </p>
+  <p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
+<p>First install the required dependencies. In my Ubuntu 11.04, is something like:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</code></pre></div>
+<p>For Ubuntu 11.04 you have to install JAGS from sources, but it seems that this version will be packaged in the next Ubuntu release. Download the software from <a href="http://sourceforge.net/projects/mcmc-jags/">here</a> and install.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">tar</span> xvfz JAGS-3.1.0.tar.gz
+<span class="kw">cd</span> JAGS-3.1.0
+<span class="kw">./configure</span>
+<span class="kw">make</span>
+<span class="kw">sudo</span> make install</code></pre></div>
+<p>Now fire R and install the interface package rjags</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">R</span>
+<span class="kw">...</span>
+<span class="kw">&gt;</span> <span class="kw">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</code></pre></div>
+<p>Now let’s do something interesting (although pretty simple). Let’s assume we have a stream of 1s and 0s with an unknown proportion of each one. From R we can generate such distribution with the command</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">points</span> <span class="kw">&lt;</span>- floor(runif(1000)<span class="kw">+.4</span>)</code></pre></div>
+<p>that generates a distribution with roughly 40% of 1s and 60% of 0s. So, our stream consists of a sequence of 0s and 1s generated using the uniform(phi) distribution where the phi parameter equals 0.4.</p>
+<p>If we don’t know this parameter and we try to learn it, we can assume that this parameter has prior uniform in the range [0,1] and thus the model that describes this scenario in the Winbugs language is</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">model</span>
+<span class="kw">{</span>
+    <span class="kw">phi</span> ~ dunif(0,1);
+    <span class="kw">y</span> ~ dbin(phi,N);
+<span class="kw">}</span></code></pre></div>
+<p>In this model N and y are known, so we provide this information in order to estimate our unknown parameter phi. We create the model and query the resulting parameter distribution:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">result</span> <span class="kw">&lt;</span>- list(y=sum(points), <span class="ot">N=</span>1000)
+<span class="kw">&gt;</span> <span class="kw">result</span>
+<span class="ot">$y</span>
+[<span class="kw">1</span>] 393
+
+<span class="ot">$N</span>
+[<span class="kw">1</span>] 1000
+
+<span class="kw">&gt;</span> <span class="kw">library</span>(rjags)
+<span class="kw">Loading</span> required package: coda
+<span class="kw">Loading</span> required package: lattice
+<span class="kw">linking</span> to JAGS 3.1.0
+<span class="kw">module</span> basemod loaded
+<span class="kw">module</span> bugs loaded
+<span class="kw">&gt;</span> <span class="kw">myModel</span> <span class="kw">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)
+<span class="kw">Compiling</span> model graph
+   <span class="kw">Resolving</span> undeclared variables
+   <span class="kw">Allocating</span> nodes
+   <span class="kw">Graph</span> Size: 5
+
+<span class="kw">Initializing</span> model
+
+<span class="kw">&gt;</span> <span class="kw">update</span>(myModel, 1000)
+  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
+<span class="kw">&gt;</span> <span class="kw">x</span> <span class="kw">&lt;</span>- jags.samples(myModel, c(<span class="st">'phi'</span>), <span class="kw">1000</span>)
+  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
+<span class="kw">&gt;</span> <span class="kw">x</span>
+<span class="ot">$phi</span>
+<span class="kw">mcarray</span>:
+[<span class="kw">1</span>] 0.3932681
+
+<span class="kw">Marginalizing</span> over: iteration(1000),<span class="kw">chain</span>(1) 
+
+<span class="kw">&gt;</span></code></pre></div>
+<p>So the inferred value of phi is 0.3932. One interesting thing in Bayesian statistics is that it does not estimate points, but probabilistic distributions over the parameters. We can see how the phi parameter was estimated by examining the Monte Carlo Chain and the distribution of the generated values during the simulation</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">chain</span> <span class="kw">&lt;</span>- as.mcmc.list(x<span class="ot">$phi</span>)
+<span class="kw">&gt;</span> <span class="kw">plot</span>(chain)</code></pre></div>
+<div class="figure">
+<img src="chain.png" />
+
+</div>
+<p>Where we can see that the values for phi in the chain were centered around the 0.4, the true parameter value.</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

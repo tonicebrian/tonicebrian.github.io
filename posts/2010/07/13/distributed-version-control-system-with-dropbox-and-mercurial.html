@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - Distributed Version Control System with Dropbox and Mercurial</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    Distributed Version Control System with Dropbox and Mercurial
+  </h2>
+  <p class="blog-post-meta">
+    Posted on July 13, 2010
+    
+  </p>
+  <p>When developing software you should use a Version Control System like Subversion, Git or Mercurial. It will spare you some nasty nightmares and it can also add you the discipline of focused work if you use it in combination with TDD or other XP practices. I used Subversion for VCS but my personal working situation made SVN a poor choice.</p>
+<p>My requisites for a truly distributed Version Control System can be summarized in the following list:</p>
+<ul>
+<li><p>Be able to work I work with several computers (home, laptop, notebook, parents’ computers, …) and I want to be able to access the repository over the Internet. This can be solved using one of the existing public repositories like <a href="http://github.com/">Github</a>, <a href="http://bitbucket.org/">Bitbucket</a> or <a href="http://sourceforge.net/">Sourceforge</a>.</p></li>
+<li><p>I need a repository backed up in the cloud for preventing data loss.</p></li>
+<li><p>I need to create private repositories.</p></li>
+<li><p>I need to work with the VCS even when I have no Internet connection. This requisite discards classical VCS like <a href="http://www.nongnu.org/cvs/">CVS</a> or <a href="http://subversion.apache.org/">Subversion</a> and only allows newer ones like <a href="http://mercurial.selenic.com/">Mercurial</a>, <a href="http://git-scm.com/">Git</a> or <a href="http://darcs.net/">Darcs</a>.</p></li>
+</ul>
+<p>The solution I have found very satisfying is to create a repository in a folder controlled by <a href="http://www.dropbox.com">Dropbox</a>, treat this as the “main” repository and clone a working copy in a local workspace. After that, I can work off-line doing commits against my working copy and by means of the push and pull commands I synchronize each working copy on each of the different computers.</p>
+<p>The only issue I have to take into account is to not push changes when I have no Internet connection and Dropbox can not synchronize to the cloud. If I would do that in two computers without connection I could incur on versioning conflicts that Dropbox could not resolve. This is not an issue because I can work locally as long as I want without any problem. Mercurial is able to track new commits and clone the local working copy just waiting for the moment when net connectivity is working again.</p>
+<p>Check this <a href="http://hginit.com/">great tutorial</a> of Mercurial written by Joel Spolsky in order to learn how to work with this Distributed Version Control System.</p>
+<p>PD. If you have found this article interesting and you don’t have a Dropbox account, please consider opening your account using <a href="https://www.dropbox.com/referrals/NTUyNTE5MzA5">this referral</a>, we’ll both get extra space in our accounts ;)</p>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

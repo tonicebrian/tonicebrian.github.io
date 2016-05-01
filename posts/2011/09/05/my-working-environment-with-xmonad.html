@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Toni Cebrián - My working environment with Xmonad</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../../../../css/bootstrap-blog.css" />
+        <link rel="stylesheet" type="text/css" href="../../../../css/syntax.css" />
+        <script type="text/javascript" src="../../../../js/ga.js"></script>
+        
+    </head>
+    <body>
+    <div class="blog-masthead">
+      <div class="container">
+    <nav class="blog-nav">
+          <a class="blog-nav-item" href="../../../../">Home</a>
+          <a class="blog-nav-item" href="../../../../about.html">About</a>
+          <a class="blog-nav-item" href="../../../../contact.html">Contact</a>
+          <a class="blog-nav-item" href="../../../../archive.html">Archive</a>
+    </nav>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+  <h2 class="blog-post-title">
+    My working environment with Xmonad
+  </h2>
+  <p class="blog-post-meta">
+    Posted on September  5, 2011
+    
+  </p>
+  <p>Fire a terminal, fire another terminal and tail some logs, open your browser and point to the web page you are developing, open your IDE and open three or four tabs with the code you suspect is causing the bug, put some breakpoints, alt-tab to the first terminal start your system under test, connect your debugging IDE to your system, perform some operations to your browser, catch the breakpoint, switch back and forth the code tabs, etc… This daily routine common to most developers, involves grabbing the mouse, arranging some windows, and switching context continuously. This creates a cognitive overload and a lack of productivity because developers are doing tasks not directly related to the task at hand.</p>
+<p>This is the reason I don’t use Gnome any more and I’ve switched to <a href="http://xmonad.org/">Xmonad</a> a tiling window manager that can be controlled almost exclusively with the keyboard. With this fully configurable window manager, I can move, resize, minimize, arrange, customize all the visible windows, move windows between workspaces, all with my hands not leaving the keyboard.The only thing I have not been able to accomplish is having the UrgentHook working for Skype. The Linux version of Skype fails to set the WM_URGENT X11 event when a new chat opens, and if I’m not in that workspace I don’t get any notification besides the bell. Still thinking about a good workaround, any ideas?</p>
+<p>Here is a screenshot of xmonad in action with  some applications in it,</p>
+<div class="figure">
+<img src="xmonad.png" />
+
+</div>
+<p>If you plan to install Xmonad in your computer, use version 0.10 or superior because it solves some nasty problems with Java applications. In case it is not yet ready for your favourite distribution, follow <a href="https://sites.google.com/site/jifengstechcollection/linux/xmonad">these instructions</a>. In order to have this configuration working, just write the following 3 files:</p>
+<ul>
+<li><p>.<em>xsession</em> with the programs you need to start when the session begins (network manager, batery manager, etc…). Put it in your $HOME dir.</p></li>
+<li><p>.<em>xmobarrc</em> with the configuration of your handy <a href="http://gorgias.mine.nu/xmobar/">textual status bar</a> . Put it in your $HOME</p></li>
+<li><p><em>xmonad.hs</em> with the configuration of the window manager itself. Put it under $HOME/.xmonad</p></li>
+</ul>
+<p><strong>xmonad.hs</strong> is a pure Haskell file for configuring the window manager, no XML, not another fancy configuration language. Some comments to the configuration file</p>
+<ul>
+<li><p><strong>lines 23-26</strong>, send Thunderbird and Skype to their dedicated workspaces</p></li>
+<li><p><strong>line 29</strong>, name the workspaces</p></li>
+<li><p><strong>lines 32-50</strong>, define new key combinations, for navigating the tiling windows, send windows to background and toggle between the tiled arrangement and focusing the whole screen into one window</p></li>
+<li><p><strong>lines 52-55</strong>, define how I want the windows to be arranged. Basically, create a specific configuration for Skype in its dedicated workspace, and for the rest of workspaces, don’t hide the menu, allow navigation with the cursors and minimize unwanted windows.</p></li>
+<li><p><strong>lines 57-77</strong>, ensemble the main xmonad window manager with the desired configuration. Spawn the status bar, and append the predefined layouts, keybindings and window hooks. Redefine some keys and fool Java setting the name of the Window Manager to LG3D in order to avoid problems with focus.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> XMonad
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">DynamicLog</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ICCCMFocus</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageDocks</span>
+<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">Run</span>(spawnPipe)
+<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">EZConfig</span>(additionalKeys)
+<span class="kw">import</span> System.<span class="fu">IO</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageHelpers</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">UrgencyHook</span>
+<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">SetWMName</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Minimize</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">WindowNavigation</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">ToggleLayouts</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">IM</span> as IM
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">PerWorkspace</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Reflect</span>
+<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Grid</span>
+<span class="kw">import</span> Data.<span class="fu">Ratio</span> ((%))
+
+<span class="kw">import</span> qualified Data.<span class="fu">Map</span> as M
+
+-- Send applications to their dedicated Workspace
+myManageHook = composeAll
+                [ className =? <span class="st">&quot;Skype&quot;</span>         --&gt; doShift <span class="st">&quot;4:skype&quot;</span>,
+                  className =? <span class="st">&quot;Thunderbird&quot;</span>   --&gt; doShift <span class="st">&quot;2:mail&quot;</span>
+                ]
+
+-- Name the workspaces
+myWorkspaces = [<span class="st">&quot;1:dev&quot;</span>,<span class="st">&quot;2:mail&quot;</span>,<span class="st">&quot;3:web&quot;</span>,<span class="st">&quot;4:skype&quot;</span>,<span class="st">&quot;5:media&quot;</span>, <span class="st">&quot;6:office&quot;</span>] ++ map show [<span class="dv">7</span>..<span class="dv">9</span>]
+
+-- Add <span class="kw">new</span> Keys
+newKeys x = M.<span class="fu">union</span> (keys defaultConfig x) (M.<span class="fu">fromList</span> (myKeys x))
+
+myKeys conf@(XConfig {XMonad.<span class="fu">modMask</span> = modm}) =
+              [
+              -- Minimize a window
+                ((modm, xK_z),               withFocused minimizeWindow)
+              , ((modm .|. shiftMask, xK_z), sendMessage RestoreNextMinimizedWin  )
+              -- Window navigation <span class="kw">with</span> cursors
+              , ((modm,                 xK_Right), sendMessage $ Go R)
+              , ((modm,                 xK_Left ), sendMessage $ Go L)
+              , ((modm,                 xK_Up   ), sendMessage $ Go U)
+              , ((modm,                 xK_Down ), sendMessage $ Go D)
+              , ((modm .|. controlMask, xK_Right), sendMessage $ Swap R)
+              , ((modm .|. controlMask, xK_Left ), sendMessage $ Swap L)
+              , ((modm .|. controlMask, xK_Up   ), sendMessage $ Swap U)
+              , ((modm .|. controlMask, xK_Down ), sendMessage $ Swap D)
+              -- Togle Fullscreen
+              , ((modm,                 xK_f    ), sendMessage ToggleLayout)
+              ]
+
+-- Define the default layout
+skypeLayout = IM.<span class="fu">withIM</span> (<span class="dv">1</span>%<span class="dv">7</span>) (IM.<span class="fu">And</span> (ClassName <span class="st">&quot;Skype&quot;</span>)  (Role <span class="st">&quot;MainWindow&quot;</span>)) Grid
+normalLayout = windowNavigation $ minimize $ avoidStruts $ onWorkspace <span class="st">&quot;4:skype&quot;</span> skypeLayout $ layoutHook defaultConfig
+myLayout = <span class="fu">toggleLayouts</span> (Full) normalLayout
+
+-- Main executable
+main = <span class="kw">do</span>
+    xmproc &lt;- spawnPipe <span class="st">&quot;xmobar /home/cebrian/.xmobarrc&quot;</span>
+    xmonad $ withUrgencyHook NoUrgencyHook $ defaultConfig
+        { manageHook = manageDocks &lt;+&gt; myManageHook &lt;+&gt; manageHook defaultConfig
+        , keys = newKeys
+        , workspaces = myWorkspaces
+        , layoutHook = myLayout
+        , logHook = takeTopFocus &gt;&gt; dynamicLogWithPP xmobarPP
+                        { ppOutput = hPutStrLn xmproc
+                        , ppTitle = xmobarColor <span class="st">&quot;green&quot;</span> <span class="st">&quot;&quot;</span> . shorten <span class="dv">50</span>
+                        , ppUrgent = xmobarColor <span class="st">&quot;yellow&quot;</span> <span class="st">&quot;red&quot;</span> . xmobarStrip
+                        }
+        , modMask = mod4Mask     -- Rebind Mod to the Windows key
+        , terminal = <span class="st">&quot;terminator&quot;</span>
+        , startupHook = setWMName <span class="st">&quot;LG3D&quot;</span>
+        } `additionalKeys`
+        [ ((controlMask .|. shiftMask, xK_l), spawn <span class="st">&quot;xscreensaver-command -lock&quot;</span>)
+        , ((controlMask, xK_Print), spawn <span class="st">&quot;sleep 0.2; scrot -s&quot;</span>)
+        , ((<span class="dv">0</span>, xK_Print), spawn <span class="st">&quot;scrot&quot;</span>)
+        ]</code></pre></div>
+<p><strong>.xsession</strong></p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co">#!/bin/bash</span>
+
+<span class="kw">xrdb</span> -merge .Xresources
+
+<span class="co"># Configure xrandr for multiple monitors</span>
+<span class="co"># External output may be &quot;VGA&quot; or &quot;VGA-0&quot; or &quot;DVI-0&quot; or &quot;TMDS-1&quot;</span>
+<span class="ot">EXTERNAL_OUTPUT=</span><span class="st">&quot;VGA-0&quot;</span>
+<span class="ot">INTERNAL_OUTPUT=</span><span class="st">&quot;LVDS&quot;</span>
+<span class="co"># EXTERNAL_LOCATION may be one of: left, right, above, or below</span>
+<span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;left&quot;</span>
+
+<span class="co"># In case I want to have both monitors on</span>
+<span class="kw">case</span> <span class="st">&quot;</span><span class="ot">$EXTERNAL_LOCATION</span><span class="st">&quot;</span><span class="kw"> in</span>
+       left<span class="kw">|</span>LEFT<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       right<span class="kw">|</span>RIGHT<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--right-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       top<span class="kw">|</span>TOP<span class="kw">|</span>above<span class="kw">|</span>ABOVE<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--above </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       bottom<span class="kw">|</span>BOTTOM<span class="kw">|</span>below<span class="kw">|</span>BELOW<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--below </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+       *<span class="kw">)</span>
+               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
+               <span class="kw">;;</span>
+<span class="kw">esac</span>
+<span class="kw">xrandr</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="ot">$EXTERNAL_OUTPUT</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="st">&quot; connected &quot;</span>
+
+<span class="kw">if [</span> <span class="ot">$?</span> <span class="ot">-eq</span> 0<span class="kw"> ]</span>; <span class="kw">then</span>
+    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --off --output <span class="ot">$EXTERNAL_OUTPUT</span> --auto
+    <span class="co"># Alternative command in case of trouble:</span>
+    <span class="co"># (sleep 2; xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_LOCATION) &amp;</span>
+<span class="kw">else</span>
+    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --auto --output <span class="ot">$EXTERNAL_OUTPUT</span> --off
+<span class="kw">fi</span>
+
+<span class="kw">trayer</span> --edge top --align right --SetDockType true --SetPartialStrut true --expand true --width 15 --height 12 --transparent true --tint 0x000000 <span class="kw">&amp;</span>
+
+<span class="kw">xscreensaver</span> -no-splash <span class="kw">&amp;</span>
+
+<span class="co"># Allow nautilus to take care of plugin USB drives and Dropbox icons</span>
+<span class="kw">nautilus</span> --no-desktop -n <span class="kw">&amp;</span>
+
+<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/nm-applet<span class="kw"> ]</span> ; <span class="kw">then</span>
+   <span class="kw">nm-applet</span> --sm-disable <span class="kw">&amp;</span>
+<span class="kw">fi</span>
+
+<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/gnome-power-manager<span class="kw"> ]</span> ; <span class="kw">then</span>
+   <span class="kw">sleep</span> 1
+   <span class="kw">gnome-power-manager</span> <span class="kw">&amp;</span>
+<span class="kw">fi</span>
+
+<span class="kw">/usr/bin/gnome-volume-control-applet</span> <span class="kw">&amp;</span>
+<span class="kw">dropbox</span> start <span class="kw">&amp;</span>
+
+<span class="kw">exec</span> /home/cebrian/.cabal/bin/xmonad</code></pre></div>
+<p><strong>.xmobarrc</strong></p>
+<pre class="plain"><code>Config { font = &quot;-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*&quot;
+       , bgColor = &quot;black&quot;
+       , fgColor = &quot;grey&quot;
+       , position = TopW L 85
+       , commands = [ Run Cpu [&quot;-L&quot;,&quot;3&quot;,&quot;-H&quot;,&quot;50&quot;,&quot;--normal&quot;,&quot;green&quot;,&quot;--high&quot;,&quot;red&quot;] 10
+                    , Run Memory [&quot;-t&quot;,&quot;Mem: &lt;usedratio&gt;%&quot;] 10
+                    , Run Swap [] 10
+                    , Run Date &quot;%a %b %_d %Y %H:%M:%S&quot; &quot;date&quot; 10
+                    , Run StdinReader
+                    ]
+       , sepChar = &quot;%&quot;
+       , alignSep = &quot;}{&quot;
+       , template = &quot;%StdinReader% }{ %cpu% | %memory% * %swap%    &lt;fc=#ee9a00&gt;%date%&lt;/fc&gt;&quot;
+       }</code></pre>
+<p>And don’t forget to add an entry for your new Xmonad desktop in <strong>/usr/share/applications/xmonad.desktop</strong> changing the path to your appropiate home</p>
+<pre class="plain"><code>[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Xmonad
+Exec=&quot;YOUR HOME HERE&quot;/.xsession
+NoDisplay=true
+X-GNOME-WMName=Xmonad
+X-GNOME-Autostart-Phase=WindowManager
+X-GNOME-Provides=windowmanager
+X-GNOME-Autostart-Notify=true</code></pre>
+<p>And to <strong>/usr/share/xsessions/xmonad.desktop</strong></p>
+<pre class="plain"><code>[Desktop Entry]
+Encoding=UTF-8
+Name=XMonad
+Comment=Lightweight tiling window manager
+Exec=&quot;YOUR HOME HERE&quot;/.xsession
+Icon=xmonad.png
+Type=XSession</code></pre>
+</div>
+
+    </div>
+
+    <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Personal blog of Toni Cebrián.</p>
+      </div>
+      <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+          <li>
+        <a href="http://github.com/tonicebrian">GitHub</a>
+          </li>
+          <li>
+        <a href="http://www.twitter.com/tonicebrian">Twitter</a>
+          </li>
+        </ol>
+      </div>
+      <div class="sidebar-module">
+        <a href="../../../../atom.xml">Atom</a> - <a href="../../../../rss.xml">RSS</a>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+    <footer class="blog-footer">
+      <p>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+      </p>
+    </footer>
+
+    </body>
+</html>

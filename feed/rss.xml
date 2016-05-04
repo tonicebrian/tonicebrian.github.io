@@ -11,9 +11,15 @@
         <item>
     <title>RecSys 2013</title>
     <link>http://www.tonicebrian.com/posts/2013/11/06/recsys-2013.html</link>
-    <description><![CDATA[<div class="info">Posted on November  6, 2013</div>
-
-<div class="figure">
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    RecSys 2013
+  </h2>
+  <p class="blog-post-meta">
+    Posted on November  6, 2013
+    
+  </p>
+  <div class="figure">
 <img src="AcmRecsys-300x42.png" />
 
 </div>
@@ -36,6 +42,7 @@
 <p>The best paper award was <a href="http://www.csie.ntu.edu.tw/~cjlin/papers/libmf.pdf">A Fast Parallel SGD for Matrix Factorization in Shared Memory Systems</a>, hardcore algorithmic approach but far from my day to day routine. I’ve mentioned before the  paper about <a href="http://dl.acm.org/citation.cfm?id=2507160">Rating-prediction and Ranking</a> from Netflix that addresses the selection bias (you are more likely to rate highly/low valued items but nothing in between) as a related sub-problem. By modeling the decision to rate you gain insight on all the unknown ratings.</p>
 <p>The last session about Scalability was the most interesting with all the papers in my ToRead list. <a href="http://dl.acm.org/citation.cfm?id=2507169">Using maximum coverage to optimize recommendation systems</a> used well known algorithms of combinatorial optimization in order to select the set of items with maximum probability of conversion. In <a href="http://dl.acm.org/citation.cfm?id=2507189">Efficient top-n recommendation for very large scale binary rated datasets</a> they presented a large scale matrix factorization algorithm for implicit datasets. This guys presented the extension to the algorithm that won the <a href="http://www.kaggle.com/c/msdchallenge">Million Song contest in Kaggle</a> so this paper must be read carefully. In <a href="http://ssc.io/wp-content/uploads/2011/12/sys024-schelter.pdf">Distributed Matrix Factorization with MapReduce using a series of Broadcast-Joins</a> it was exposed a distributed Alternating Least Squares (ALS) approach to Matrix Factorization that is going to be included in <a href="http://mahout.apache.org/">Mahout</a>. They also taught me about a toolkit for generating synthetic data, <a href="https://github.com/TU-Berlin-DIMA/myriad-toolkit/wiki">Myriad</a>,  something I have to research more carefully.</p>
 <p>And that was it!! I had a very good time and glad to meet lot of people I admire in person. Hopefully see you next year!!</p>
+</div>
 ]]></description>
     <pubDate>Wed, 06 Nov 2013 10:00:46 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2013/11/06/recsys-2013.html</guid>
@@ -44,9 +51,15 @@
 <item>
     <title>Introduction to the Minhash algorithm</title>
     <link>http://www.tonicebrian.com/posts/2013/03/11/introduction-to-the-minhash-algorithm.html</link>
-    <description><![CDATA[<div class="info">Posted on March 11, 2013</div>
-
-<p>Say that you have a collection of <em>N</em> objects and you want to want to compare each object against each other. Maybe you are interested in the distance between objects in an Euclidean Space or just the number of attributes or features they share. If you need to perform each comparison, you’ll need to perform <span class="math inline">\(O(N^2)\)</span> and that’s a problem when your N is in the order of the millions or tens of millions, likely the order of your user or item company’s database. Is there a way to perform less comparisons when we aren’t interested in the whole set of comparison but just in finding the set of closest items under a given measure? Yes, the <a href="http://en.wikipedia.org/wiki/MinHash">Minhash Algorithm</a>.</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Introduction to the Minhash algorithm
+  </h2>
+  <p class="blog-post-meta">
+    Posted on March 11, 2013
+    
+  </p>
+  <p>Say that you have a collection of <em>N</em> objects and you want to want to compare each object against each other. Maybe you are interested in the distance between objects in an Euclidean Space or just the number of attributes or features they share. If you need to perform each comparison, you’ll need to perform <span class="math inline">\(O(N^2)\)</span> and that’s a problem when your N is in the order of the millions or tens of millions, likely the order of your user or item company’s database. Is there a way to perform less comparisons when we aren’t interested in the whole set of comparison but just in finding the set of closest items under a given measure? Yes, the <a href="http://en.wikipedia.org/wiki/MinHash">Minhash Algorithm</a>.</p>
 <p>In this post we are going to be focused in the Jackard Coefficient for determining the closeness between two objects. Each of the N object will have a set of <em>m</em> features where <em>m </em> usually is very large. You can think of the objects in N as the members of a social network or Amazon customers, and the set of features that describe them all the friends they have in the social network or all the books they previously purchased in the second case. Comparing two users would imply comparing their feature sets using the Jackard Coefficient formula:</p>
 <p><span class="math display">\[JackardCoeff(A,B)=\frac{|A\cap B|}{|A\cup B|}\]</span></p>
 <h3 id="understanding-the-minhash-algorithm">Understanding the Minhash Algorithm</h3>
@@ -225,6 +238,7 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <li><p><a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.8215">Minwise independent permutations</a> The paper with the math that demonstrates the link between the Jackard Coefficient and the probability.</p></li>
 <li><p><a href="http://infolab.stanford.edu/~ullman/mmds.html">Chapter 3</a> of the excellent book “Minning massive datasets”</p></li>
 </ol>
+</div>
 ]]></description>
     <pubDate>Mon, 11 Mar 2013 10:00:55 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2013/03/11/introduction-to-the-minhash-algorithm.html</guid>
@@ -233,9 +247,15 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <item>
     <title>Training Gradient Boosting Trees with Python</title>
     <link>http://www.tonicebrian.com/posts/2012/11/05/training-gradient-boosting-trees-with-python.html</link>
-    <description><![CDATA[<div class="info">Posted on November  5, 2012</div>
-
-<p>I’ve been doing some data mining lately and specially looking into <a href="http://en.wikipedia.org/wiki/Gradient_boosting">Gradient Boosting Trees</a> since it is claimed that this is one of the techniques with best performance out of the box. In order to have a better understanding of the technique I’ve reproduced the example of section 10.14.1 California Housing in the book <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn">The Elements of Statistical Learning</a>. Each point of this dataset represents the house value of a property with some attributes of that house. You can get the data and the description of those attributes from <a href="http://lib.stat.cmu.edu/modules.php?op=modload&amp;name=Downloads&amp;file=index&amp;req=getit&amp;lid=83">here</a>.</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Training Gradient Boosting Trees with Python
+  </h2>
+  <p class="blog-post-meta">
+    Posted on November  5, 2012
+    
+  </p>
+  <p>I’ve been doing some data mining lately and specially looking into <a href="http://en.wikipedia.org/wiki/Gradient_boosting">Gradient Boosting Trees</a> since it is claimed that this is one of the techniques with best performance out of the box. In order to have a better understanding of the technique I’ve reproduced the example of section 10.14.1 California Housing in the book <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn">The Elements of Statistical Learning</a>. Each point of this dataset represents the house value of a property with some attributes of that house. You can get the data and the description of those attributes from <a href="http://lib.stat.cmu.edu/modules.php?op=modload&amp;name=Downloads&amp;file=index&amp;req=getit&amp;lid=83">here</a>.</p>
 <p>I know that the whole exercise here can be easily done with the R package <a href="http://cran.r-project.org/web/packages/gbm/index.html">gbm</a> but I wanted to do the exercise using Python. Since learning several languages well enough is difficult and time consuming I would prefer to stick all my data analysis to Python instead doing it in R, even with R being superior on some cases. But having only one language for doing all your scripting, systems programming and prototyping PLUS your data analysis is a good reason for me. Your upfront effort of learning the language, setting up your tools and editors, etc. is done only once instead of twice.</p>
 <h2 id="data-preparation-and-model-fitting">Data Preparation and Model Fitting</h2>
 <p>The first thing to do is to load the data into a <a href="http://pandas.pydata.org/pandas-docs/stable">Pandas</a> dataframe</p>
@@ -286,7 +306,10 @@ plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span
 plt.legend(loc<span class="op">=</span><span class="st">&#39;upper right&#39;</span>)
 plt.xlabel(<span class="st">&#39;Boosting Iterations&#39;</span>)
 plt.ylabel(<span class="st">&#39;Deviance&#39;</span>)</code></pre></div>
-<p><img src="Errors.png" />]</p>
+<div class="figure">
+<img src="Errors.png" />
+
+</div>
 <p>As you can see in the previous graph, although the train error keeps going down as we add more trees to our model, the test error remains more or less constant and doesn’t incur in overfitting. This is mainly due to the shrinkage parameter and one of the good features of this algorithm.</p>
 <p>When doing data mining as important as finding a good model is being able to interpret it, because based on that analysis and interpretation preemptive actions can be performed. Although base trees are easily interpretable when you are adding several of those trees interpretation is more difficult. You usually rely on some measures of the predictive power of each feature. Let’s plot feature importance in predicting the House Value.</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">feature_importance <span class="op">=</span> clf.feature_importances_
@@ -354,6 +377,7 @@ plt.show()</code></pre></div>
 </div>
 <h2 id="addendum">Addendum</h2>
 <p>This blog post was written using <a href="http://pylit.berlios.de">Pylit</a> as the tool for doing <a href="http://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>. The code can be seen <a href="https://gist.github.com/4018084">here</a>. I think that literate programming is way superior to other software methodologies like TDD when coding algorithms for data analysis. The main problem I find right now is the lack of proper tooling for really taking advantage of literate programming, but this is a technique that I’m definitely going to research deeper.</p>
+</div>
 ]]></description>
     <pubDate>Mon, 05 Nov 2012 19:26:55 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2012/11/05/training-gradient-boosting-trees-with-python.html</guid>
@@ -362,9 +386,15 @@ plt.show()</code></pre></div>
 <item>
     <title>Thread pool in C++</title>
     <link>http://www.tonicebrian.com/posts/2012/05/23/thread-pool-in-c.html</link>
-    <description><![CDATA[<div class="info">Posted on May 23, 2012</div>
-
-<div class="figure">
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Thread pool in C++
+  </h2>
+  <p class="blog-post-meta">
+    Posted on May 23, 2012
+    
+  </p>
+  <div class="figure">
 <img src="BoostLogo.png" />
 
 </div>
@@ -435,6 +465,7 @@ work.reset();</code></pre></div>
         <span class="kw">return</span>;
     }
 }</code></pre></div>
+</div>
 ]]></description>
     <pubDate>Wed, 23 May 2012 17:30:07 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2012/05/23/thread-pool-in-c.html</guid>
@@ -443,9 +474,15 @@ work.reset();</code></pre></div>
 <item>
     <title>Parser combinators in Scala</title>
     <link>http://www.tonicebrian.com/posts/2012/02/23/parser-combinators-in-scala.html</link>
-    <description><![CDATA[<div class="info">Posted on February 23, 2012</div>
-
-<p>Lately, I’ve been writing some <a href="http://research.yahoo.com/files/ieeecomputer.pdf">matrix factorization</a> code for a video recommender system. I’m a big fan of Test Driven Development but it is a technique that is difficult for me to apply to the numerical or algorithmic domain. In order to make sure that the code I write is correct what I’m doing is the Oracle Test Pattern (I’m sure there is a correct name for this but I’m not able to find it right now). The idea is to have a reference implementation that solves the exact problem you are trying to solve. In my case, that reference implementation does not exists but I’m writing a straightforward unoptimized version of the script in Python using the Numpy libraries. That will be my ground truth when comparing results with the highly optimized parallel Scala version of the algorithm.</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Parser combinators in Scala
+  </h2>
+  <p class="blog-post-meta">
+    Posted on February 23, 2012
+    
+  </p>
+  <p>Lately, I’ve been writing some <a href="http://research.yahoo.com/files/ieeecomputer.pdf">matrix factorization</a> code for a video recommender system. I’m a big fan of Test Driven Development but it is a technique that is difficult for me to apply to the numerical or algorithmic domain. In order to make sure that the code I write is correct what I’m doing is the Oracle Test Pattern (I’m sure there is a correct name for this but I’m not able to find it right now). The idea is to have a reference implementation that solves the exact problem you are trying to solve. In my case, that reference implementation does not exists but I’m writing a straightforward unoptimized version of the script in Python using the Numpy libraries. That will be my ground truth when comparing results with the highly optimized parallel Scala version of the algorithm.</p>
 <h3 id="the-problem">The problem</h3>
 <p>So the problem is that I’m working interactively coding the algorithm in an iPython session and I’m getting results of this kind</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">In [<span class="dv">4</span>]: x
@@ -480,6 +517,7 @@ matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span cla
 <li><p>Each parser returns either the parsed string or a more complex Scala structure, like for instance, a list of strings in the case of <em>rep(parser1,parser2)</em>. Those results are sent to a parser transformator (the_ ^^_ operator) that works on the parser results and generates the true parsing result. In the example, first we create an array of Floats, and then an Array of Arrays of Floats that represent my matrix.</p></li>
 </ul>
 <p>Really cool feature that has spared me a lot of grunt work by just writing two lines of code.</p>
+</div>
 ]]></description>
     <pubDate>Thu, 23 Feb 2012 10:59:19 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2012/02/23/parser-combinators-in-scala.html</guid>
@@ -488,9 +526,15 @@ matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span cla
 <item>
     <title>CSV parser in C++ with Boost and Template Metaprogramming</title>
     <link>http://www.tonicebrian.com/posts/2011/12/28/csv-parser-in-c-with-boost-and-template-metaprogramming.html</link>
-    <description><![CDATA[<div class="info">Posted on December 28, 2011</div>
-
-<p>One common situation when analyzing big chunks of data is to parse big CSV files with a record structure on each line. That is, all lines conform to a fixed schema where each line represents a record and each record has several columns of different types. Your objective is to parse and fill a data structure like this</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    CSV parser in C++ with Boost and Template Metaprogramming
+  </h2>
+  <p class="blog-post-meta">
+    Posted on December 28, 2011
+    
+  </p>
+  <p>One common situation when analyzing big chunks of data is to parse big CSV files with a record structure on each line. That is, all lines conform to a fixed schema where each line represents a record and each record has several columns of different types. Your objective is to parse and fill a data structure like this</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> foo {
     <span class="dt">int</span> a;
     std::string b;
@@ -578,6 +622,7 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
 <p>almost identical to the code we would have written by hand. The compiler is the one who knows how many fields our structure has at compile time and generates as many efficient instructions as needed.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>I wanted to stretch my programming muscles by coding a generic, flexible and fast CSV parser in C++ using template metaprogramming. The generic and flexible parts of the task have been accomplished but not the performance objectives. Although the library is fast enough for most tasks, it isn’t in a scenario of Big Data parsing big files. The tokenizer iterator is incurring a performance penalty each time I try to derreference it, since it creates and allocates memory for a <em>std::string</em> each time we invoke _*it_. This memory allocation is a performance drain doing useless work because we need this information only for parsing and getting a value, but the string is discarded thereafter. It would be better to perform an in-place parsing using the string allocated when reading the lines of the file. To that end it will be enlightening in the future to try this same exercise with more performant string libraries like the <a href="http://www.partow.net/programming/strtk/index.html">C++ String Toolkit</a> and see the differences in performance.</p>
+</div>
 ]]></description>
     <pubDate>Wed, 28 Dec 2011 18:00:03 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/12/28/csv-parser-in-c-with-boost-and-template-metaprogramming.html</guid>
@@ -586,14 +631,21 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
 <item>
     <title>Implementing LDA</title>
     <link>http://www.tonicebrian.com/posts/2011/11/28/implementing-lda.html</link>
-    <description><![CDATA[<div class="info">Posted on November 28, 2011</div>
-
-<p>Lately I was playing with Latent Dirichlet Allocation (<a href="http://en.wikipedia.org/wiki/Latent_Dirichlet_allocation">LDA</a>) for a project at work. If for whatever reason you need to implement such algorithm perhaps you will save some time reading the walkthrough I did.</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Implementing LDA
+  </h2>
+  <p class="blog-post-meta">
+    Posted on November 28, 2011
+    
+  </p>
+  <p>Lately I was playing with Latent Dirichlet Allocation (<a href="http://en.wikipedia.org/wiki/Latent_Dirichlet_allocation">LDA</a>) for a project at work. If for whatever reason you need to implement such algorithm perhaps you will save some time reading the walkthrough I did.</p>
 <p>First you must be sure that LDA is the algorithm you are looking for. From a corpus of documents you will get K lists with words from your documents in them with a number assigned to each word denoting the relevance of the given word in the lists. Each list represents a topic, and that would be your topic description, no fancy words like “Computers”, “Biology” or “Life meaning”, just a set of words that a human must interpret. You could always assign a single name by picking the most prominent word in the list or treating the list as a valued vector and comparing it against a <em>canonical topic description</em>. So take a look at the first examples in <a href="http://www.cs.princeton.edu/~blei/kdd-tutorial.pdf">this presentation</a> and get inspired.<img src="http://upload.wikimedia.org/wikipedia/commons/4/4d/Smoothed_LDA.png" /></p>
 <p>OK so you need some code to test how this method behaves with your particular data. The first thing to try is the <a href="http://cran.r-project.org/web/packages/topicmodels/index.html">topicmodels</a> package from the <a href="http://www.r-project.org/">R</a>   statistical software package. This can give you an idea of the method and try to use it in a more serious Java application by means of the <a href="http://mallet.cs.umass.edu/">Mallet library</a>.</p>
 <p>But say that you need to create your own implementation because Java horrifies you or because you need a parallel version or whatever the reason. The first thing you have to do is to choose the inference method of your model between <strong>variational methods</strong> or <strong>gibbs sampling</strong>.<a href="http://www.phontron.com/blog/?p=24">This post</a> will give you some ideas for picking the right method for your particular problem. The original papers picked the variational approach but I went through the Gibbs sampling method because I found <a href="http://dbgroup.cs.tsinghua.edu.cn/wangyi/lda/lda.pdf">this paper</a> where all the mathematical derivations are nailed down. That way I was able to fully understand the method and at the same time being sure that my implementation was right and sound.  If you need more guidance, take a look at <a href="http://www.arbylon.net/projects/LdaGibbsSampler.java">this simple implementation</a> for getting an idea of the main functions and data structures you’ll have to code.</p>
 <p>Once you have your code written you will have to check whether it is correct or not. The example in <a href="http://www.pnas.org/content/101/suppl.1/5228.full.pdf">this paper</a> using pixel positions and pixel intensities instead of words and word counts is very illustrating and will show visually the correctness of your implementation. Once you have your algorithm up and running perhaps you want to scale it up to more machines, so you could benefit from reading <a href="http://www.ics.uci.edu/~asuncion/pubs/JMLR_09.pdf">this paper </a>and taking also a look at this <a href="http://blog.smola.org/post/6359713161/speeding-up-latent-dirichlet-allocation">blog post</a> from <a href="http://alex.smola.org/">Alex Smola</a> and their <a href="https://github.com/shravanmn/Yahoo_LDA">distributed implementation of LDA</a> on Github.</p>
 <p>Happy coding!!!</p>
+</div>
 ]]></description>
     <pubDate>Mon, 28 Nov 2011 18:56:06 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/11/28/implementing-lda.html</guid>
@@ -602,9 +654,15 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
 <item>
     <title>Getting started with JAGS for Bayesian Modelling</title>
     <link>http://www.tonicebrian.com/posts/2011/09/13/getting-started-with-jags-for-bayesian-modelling.html</link>
-    <description><![CDATA[<div class="info">Posted on September 13, 2011</div>
-
-<p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Getting started with JAGS for Bayesian Modelling
+  </h2>
+  <p class="blog-post-meta">
+    Posted on September 13, 2011
+    
+  </p>
+  <p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
 <p>First install the required dependencies. In my Ubuntu 11.04, is something like:</p>
 <div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</code></pre></div>
 <p>For Ubuntu 11.04 you have to install JAGS from sources, but it seems that this version will be packaged in the next Ubuntu release. Download the software from <a href="http://sourceforge.net/projects/mcmc-jags/">here</a> and install.</p>
@@ -669,6 +727,7 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
 
 </div>
 <p>Where we can see that the values for phi in the chain were centered around the 0.4, the true parameter value.</p>
+</div>
 ]]></description>
     <pubDate>Tue, 13 Sep 2011 16:30:44 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/09/13/getting-started-with-jags-for-bayesian-modelling.html</guid>
@@ -677,9 +736,15 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
 <item>
     <title>My working environment with Xmonad</title>
     <link>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</link>
-    <description><![CDATA[<div class="info">Posted on September  5, 2011</div>
-
-<p>Fire a terminal, fire another terminal and tail some logs, open your browser and point to the web page you are developing, open your IDE and open three or four tabs with the code you suspect is causing the bug, put some breakpoints, alt-tab to the first terminal start your system under test, connect your debugging IDE to your system, perform some operations to your browser, catch the breakpoint, switch back and forth the code tabs, etc… This daily routine common to most developers, involves grabbing the mouse, arranging some windows, and switching context continuously. This creates a cognitive overload and a lack of productivity because developers are doing tasks not directly related to the task at hand.</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    My working environment with Xmonad
+  </h2>
+  <p class="blog-post-meta">
+    Posted on September  5, 2011
+    
+  </p>
+  <p>Fire a terminal, fire another terminal and tail some logs, open your browser and point to the web page you are developing, open your IDE and open three or four tabs with the code you suspect is causing the bug, put some breakpoints, alt-tab to the first terminal start your system under test, connect your debugging IDE to your system, perform some operations to your browser, catch the breakpoint, switch back and forth the code tabs, etc… This daily routine common to most developers, involves grabbing the mouse, arranging some windows, and switching context continuously. This creates a cognitive overload and a lack of productivity because developers are doing tasks not directly related to the task at hand.</p>
 <p>This is the reason I don’t use Gnome any more and I’ve switched to <a href="http://xmonad.org/">Xmonad</a> a tiling window manager that can be controlled almost exclusively with the keyboard. With this fully configurable window manager, I can move, resize, minimize, arrange, customize all the visible windows, move windows between workspaces, all with my hands not leaving the keyboard.The only thing I have not been able to accomplish is having the UrgentHook working for Skype. The Linux version of Skype fails to set the WM_URGENT X11 event when a new chat opens, and if I’m not in that workspace I don’t get any notification besides the bell. Still thinking about a good workaround, any ideas?</p>
 <p>Here is a screenshot of xmonad in action with  some applications in it,</p>
 <div class="figure">
@@ -871,6 +936,7 @@ Comment=Lightweight tiling window manager
 Exec=&quot;YOUR HOME HERE&quot;/.xsession
 Icon=xmonad.png
 Type=XSession</code></pre>
+</div>
 ]]></description>
     <pubDate>Mon, 05 Sep 2011 11:00:16 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</guid>
@@ -879,9 +945,15 @@ Type=XSession</code></pre>
 <item>
     <title>Maximal clique enumeration using C++0x and the STL</title>
     <link>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</link>
-    <description><![CDATA[<div class="info">Posted on August 29, 2011</div>
-
-<p>Lately I’ve started to take a look at how parallelism is being done in a pure functional language like Haskell and their related technologies <a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/parallel/remote.pdf">Haskell in the Cloud</a> and <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a>. As a proof of concept and in order to better learn those techniques, I want to parallelize the <a href="http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm">Bron-Kerbosch algorithm</a> that returns the set of maximal <a href="http://en.wikipedia.org/wiki/Clique_%28graph_theory%29">cliques</a> in a graph.The Bron-Kerbosch algorithm in pseudocode is something like this:</p>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Maximal clique enumeration using C++0x and the STL
+  </h2>
+  <p class="blog-post-meta">
+    Posted on August 29, 2011
+    
+  </p>
+  <p>Lately I’ve started to take a look at how parallelism is being done in a pure functional language like Haskell and their related technologies <a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/parallel/remote.pdf">Haskell in the Cloud</a> and <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a>. As a proof of concept and in order to better learn those techniques, I want to parallelize the <a href="http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm">Bron-Kerbosch algorithm</a> that returns the set of maximal <a href="http://en.wikipedia.org/wiki/Clique_%28graph_theory%29">cliques</a> in a graph.The Bron-Kerbosch algorithm in pseudocode is something like this:</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function bronKerbosch()
 compsub <span class="op">=</span> []
 cand <span class="op">=</span> V
@@ -1003,6 +1075,7 @@ cliqueEnumerate(compsub, cand, <span class="op">not</span>)</code></pre></div>
 }</code></pre></div>
 <p>For this function my first attempt was to write it using the <em>std::max_element</em> function, but I was worried that since the function we pass isn’t a transformation of the data but a comparison function (<em>less</em>), I was worried that on each comparison the set_intersection would be computed redundantly on each step.</p>
 <p>There can be, for sure, room for improvement (any C++ guru in the audience?), but I’m pretty satisfied with the obtained implementation. It reads almost as the pseudocode. I think this is because I first wrote the Haskell version and the C++ has the functional flavor in it. Would I write first the C++ version and there would be for sure lots of nasty loops and array indexes.</p>
+</div>
 ]]></description>
     <pubDate>Mon, 29 Aug 2011 11:01:00 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</guid>

@@ -20,7 +20,8 @@ main = hakyll $ do
         route   idRoute
         compile copyFileCompiler
 
-    match "feed/*" $ do
+    -- static files to copy verbatim
+    match (fromList ["feed/*", "CNAME"]) $ do
       route idRoute
       compile copyFileCompiler
 

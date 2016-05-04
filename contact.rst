@@ -2,4 +2,7 @@
 title: Contact
 ---
 
-You can contact me at @tonicebrian 
+Contact
+-------
+
+You can contact me at `toni.cebrian@gmail.com`.

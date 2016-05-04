@@ -53,7 +53,7 @@ main = hakyll $ do
 
             makeItem ""
                 >>= loadAndApplyTemplate "templates/archive.html" archiveContext
-                >>= loadAndApplyTemplate "templates/default.html" archiveContext
+                >>= loadAndApplyTemplate "templates/default.html" postCtx
                 >>= relativizeUrls
 
     create ["atom.xml"] $ do

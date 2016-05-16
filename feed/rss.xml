@@ -7,8 +7,92 @@
         <description><![CDATA[My personal blog where I talk mostly about programming, machine learning and other things]]></description>
         <atom:link href="http://www.tonicebrian.com/feed/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Wed, 06 Nov 2013 10:00:46 UT</lastBuildDate>
+        <lastBuildDate>Sun, 15 May 2016 19:48:46 UT</lastBuildDate>
         <item>
+    <title>Python tunneling</title>
+    <link>http://www.tonicebrian.com/posts/2016/05/15/python-tunnels.html</link>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Python tunneling
+  </h2>
+  <p class="blog-post-meta">
+    Posted on May 15, 2016
+    
+  </p>
+  <h1 id="how-to-create-ssh-tunnels-in-python">How to create ssh tunnels in Python</h1>
+<p>Recently I’ve been doing a bit of data analysis on the production servers using the <a href="http://jupyter.org/">Jupyter notebook</a> from my laptop. This is convenient since I have all the tools and libraries installed in my laptop for creating interesting notebooks. But data is still missing when running the notebook since the interesting data resides in the production machines. In the past I created tunnels using command line <code>ssh -L</code> but this broke the flow when running notebooks and figuring later that the tunnel wasn’t setup or it was accessing the wrong database because and old sesssion was still running. So the best alternative is to have the tunnel creation as part of the iPython notebook. I researched a bit and this are the recipes I found for creating tunnels with Python.</p>
+<h2 id="creating-a-tunnel-to-a-remote-machine">Creating a tunnel to a remote machine</h2>
+<p>This is the simplest tunnel. You want to access a remote machine and perform a grep on some Apache logs or download a file that was in a remote folder. For this you need to install <a href="https://pypi.python.org/pypi/paramiko">paramiko</a> and the required development libraries:</p>
+<pre><code>sudo apt-get install libssl-dev
+pip install paramiko</code></pre>
+<p>All the instructions in this post assume that you have in your <code>$HOME/.ssh/config</code> file the required info for connecting to a remote machine so you don’t risk of publishing usernames and passwords when pushing to a repo.</p>
+<p>Here is the snippet that creates the connection:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="co"># Create a SSH connection</span>
+<span class="im">import</span> paramiko
+<span class="im">import</span> os
+
+ssh <span class="op">=</span> paramiko.SSHClient()
+ssh._policy <span class="op">=</span> paramiko.WarningPolicy()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+ssh_config <span class="op">=</span> paramiko.SSHConfig()
+user_config_file <span class="op">=</span> os.path.expanduser(<span class="st">&quot;~/.ssh/config&quot;</span>)
+<span class="cf">if</span> os.path.exists(user_config_file):
+    <span class="cf">with</span> <span class="bu">open</span>(user_config_file) <span class="im">as</span> f:
+        ssh_config.parse(f)
+
+cfg <span class="op">=</span> {<span class="st">&#39;hostname&#39;</span>: THE_HOST_NAME_IN_CONFIG}
+
+user_config <span class="op">=</span> ssh_config.lookup(cfg[<span class="st">&#39;hostname&#39;</span>])
+cfg[<span class="st">&quot;hostname&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;hostname&quot;</span>]
+cfg[<span class="st">&quot;username&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;user&quot;</span>]
+key<span class="op">=</span>paramiko.RSAKey.from_private_key_file(privateKey)
+cfg[<span class="st">&quot;pkey&quot;</span>] <span class="op">=</span> key
+
+<span class="cf">if</span> <span class="st">&#39;proxycommand&#39;</span> <span class="op">in</span> user_config:
+   cfg[<span class="st">&#39;sock&#39;</span>] <span class="op">=</span> paramiko.ProxyCommand(user_config[<span class="st">&#39;proxycommand&#39;</span>])
+
+ssh.<span class="ex">connect</span>(<span class="op">**</span>cfg)</code></pre></div>
+<p>And then you can execute remote commands. For instance, grep the logs for a given day and retrieve the hits to a given resource. This could be accomplished doing:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">cmd <span class="op">=</span> <span class="st">&#39;sudo grep &quot;{}&quot; /var/log/httpd/{} | grep myURL&#39;</span>.<span class="bu">format</span>(dayUnderStudy, access_log_file)
+stdin, stdout, stderr <span class="op">=</span> ssh.exec_command(cmd)</code></pre></div>
+<p>And then manipulating the <code>stdout</code> variable with pure Python code.</p>
+<p>Once done, close the connection in your notebook.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">ssh.close()</code></pre></div>
+<h2 id="creating-a-tunnel-to-a-remote-machine-in-order-to-access-a-third-machine">Creating a tunnel to a remote machine in order to access a third machine</h2>
+<p>This is the classical setup where you want to access databases that are only visible from the machines in your cluster. This can be accomplished by Paramiko itself but I found easier to setup the forwarding with a library that is itself using Paramiko underneathi, <a href="https://pypi.python.org/pypi/sshtunnel">sshtunnel</a>.</p>
+<pre><code>pip install sshtunnel</code></pre>
+<p>So the setup is, we ssh to a machine A that has visibility access to a second machine B. Usually what we want is to do is to map a port in B, for instance MySQL port 3306, to a local free port in our host. We just create a server that maps those ports</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sshtunnel <span class="im">import</span> SSHTunnelForwarder
+<span class="im">import</span> logging
+
+server <span class="op">=</span> SSHTunnelForwarder(
+   (HOST_A, <span class="dv">22</span>),
+   ssh_username<span class="op">=</span>USER_IN_A, 
+   ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,
+   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B
+   local_bind_address<span class="op">=</span>(<span class="st">&#39;&#39;</span>,MY_LOCAL_PORT),
+   logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) 
+   )
+
+server.start()</code></pre></div>
+<p>If we were doing the tunneling for accessing a remote DB, using that remove access can be done by:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> MySQLdb
+conn<span class="op">=</span> MySQLdb.<span class="ex">connect</span>(host<span class="op">=</span><span class="st">&#39;127.0.0.1&#39;</span>,
+                  port<span class="op">=</span>MY_LOCAL_PORT,
+                  user<span class="op">=</span>DB_USER, 
+                  passwd<span class="op">=</span>DB_PWD,
+                  db<span class="op">=</span>DATABASE)</code></pre></div>
+<p>And then closing all connections:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">conn.close()
+server.stop()</code></pre></div>
+</div>
+]]></description>
+    <pubDate>Sun, 15 May 2016 19:48:46 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2016/05/15/python-tunnels.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
     <title>RecSys 2013</title>
     <link>http://www.tonicebrian.com/posts/2013/11/06/recsys-2013.html</link>
     <description><![CDATA[<div class="blog-post">
@@ -940,145 +1024,6 @@ Type=XSession</code></pre>
 ]]></description>
     <pubDate>Mon, 05 Sep 2011 11:00:16 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</guid>
-    <dc:creator>Toni Cebrián</dc:creator>
-</item>
-<item>
-    <title>Maximal clique enumeration using C++0x and the STL</title>
-    <link>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</link>
-    <description><![CDATA[<div class="blog-post">
-  <h2 class="blog-post-title">
-    Maximal clique enumeration using C++0x and the STL
-  </h2>
-  <p class="blog-post-meta">
-    Posted on August 29, 2011
-    
-  </p>
-  <p>Lately I’ve started to take a look at how parallelism is being done in a pure functional language like Haskell and their related technologies <a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/parallel/remote.pdf">Haskell in the Cloud</a> and <a href="http://www.haskell.org/haskellwiki/GHC/Data_Parallel_Haskell">Data Parallel Haskell</a>. As a proof of concept and in order to better learn those techniques, I want to parallelize the <a href="http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm">Bron-Kerbosch algorithm</a> that returns the set of maximal <a href="http://en.wikipedia.org/wiki/Clique_%28graph_theory%29">cliques</a> in a graph.The Bron-Kerbosch algorithm in pseudocode is something like this:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function bronKerbosch()
-compsub <span class="op">=</span> []
-cand <span class="op">=</span> V
-<span class="op">not</span> <span class="op">=</span> []
-cliqueEnumerate(compsub, cand, <span class="op">not</span>)</code></pre></div>
-<p>and the <em>cliqueEnumerate</em> function in pseudo-code:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">function cliqueEnumerate(compsub, cand, <span class="op">not</span>)
-<span class="cf">if</span> cand <span class="op">=</span> [] then 
-    <span class="cf">if</span> <span class="op">not</span> <span class="op">=</span> [] then
-        Output compsub
-<span class="cf">else</span>
-    fixp <span class="op">=</span> The vertex <span class="op">in</span> cand that <span class="op">is</span> connected to the greatest number of other vertices <span class="op">in</span> cand
-    cur_v <span class="op">=</span> fixp
-    <span class="cf">while</span> cur_v <span class="op">!=</span> NULL do
-        new_not <span class="op">=</span> All vertices <span class="op">in</span> <span class="op">not</span> that are connected to cur_v
-        new_cand <span class="op">=</span> All vertices <span class="op">in</span> cand that are connected to cur_v
-        new_compsub <span class="op">=</span> compsub <span class="op">+</span> cur_v
-        cliqueEnumerate(new_compsub, new_cand, new_not)
-        <span class="op">not</span> <span class="op">=</span> <span class="op">not</span> <span class="op">+</span> cur_v
-        cand <span class="op">=</span> cand <span class="op">-</span> cur_v
-        <span class="cf">if</span> there <span class="op">is</span> a vertex v <span class="op">in</span> cand that <span class="op">is</span> <span class="op">not</span> connected to fixp then
-           cur_v <span class="op">=</span> v
-        <span class="cf">else</span>
-           cur_v <span class="op">=</span> NULL</code></pre></div>
-<p>This pseudocode is from the paper, <a href="http://www.sciencedirect.com/science/article/pii/S0743731509000082"><em>A scalable, parallel algorithm for maximal clique enumeration</em></a></p>
-<p>I have written a first version of this algorithm in Haskell but, as a baseline and because I wanted to test the new features of the new C++0x standard, I’ve written this algorithm in C++ making extensive use of the STL and the lambdas. I forgot how verbose C++ is but the addition of the keyword <strong>auto</strong> and the lambdas has somehow alleviated it a little.</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">void</span> Graph::cliqueEnumerate(<span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; compsub,
-                     vector&lt;<span class="dt">int</span>&gt; cand,
-                     vector&lt;<span class="dt">int</span>&gt; cnot,
-                     vector&lt;vector&lt;<span class="dt">int</span>&gt; &gt;&amp; result) <span class="dt">const</span> {
-
-    <span class="co">// Function that answer whether the node is conected</span>
-    <span class="kw">if</span>(cand.empty()){
-        <span class="kw">if</span>(cnot.empty()){
-            <span class="co">// New clique found</span>
-            result.push_back(compsub);
-        }
-    } <span class="kw">else</span>{
-        <span class="dt">int</span> fixp = findFixP(cand);
-        <span class="dt">int</span> cur_v = fixp;
-
-        <span class="kw">while</span>(cur_v != <span class="dv">-1</span>){
-            vector&lt;<span class="dt">int</span>&gt; new_not;
-            vector&lt;<span class="dt">int</span>&gt; new_cand;
-            vector&lt;<span class="dt">int</span>&gt; new_compsub;
-
-            <span class="co">// Auxiliar lambda function</span>
-            <span class="kw">auto</span> isConected =[cur_v,<span class="kw">this</span>](<span class="dt">int</span> x) {
-                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
-                <span class="kw">return</span> find(edges.begin(), edges.end(), cur_v) != edges.end();
-            }; 
-
-            <span class="co">// Compose new vector</span>
-            <span class="co">// Avoid performance bottlenecks by reserving memory before hand</span>
-            new_compsub.reserve(compsub.size()<span class="dv">+1</span>);
-            new_not.reserve(cnot.size());
-            new_cand.reserve(cand.size());
-            copy_if(cnot.begin(),cnot.end(),back_inserter(new_not),isConected);
-            copy_if(cand.begin(),cand.end(),back_inserter(new_cand),isConected);
-            copy(compsub.begin(), compsub.end(), back_inserter(new_compsub));
-            new_compsub.push_back(cur_v);
-
-            <span class="co">// Recursive call</span>
-            cliqueEnumerate(new_compsub, new_cand, new_not, result);
-
-            <span class="co">// Generate new cnot and cand for the loop</span>
-            cnot.push_back(cur_v);
-            cand.erase(find(cand.begin(),cand.end(),cur_v));
-
-            <span class="co">// Last check</span>
-            <span class="kw">auto</span> v = find_if(cand.begin(),
-                             cand.end(), 
-                             [fixp,<span class="kw">this</span>](<span class="dt">int</span> x) {
-                                <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; edges = <span class="kw">this</span>-&gt;getEdges(x);
-                                <span class="kw">return</span> find(edges.begin(), edges.end(), fixp) == edges.end();
-                             });
-
-            <span class="co">// Obtain new cur_v value</span>
-            <span class="kw">if</span>(v != cand.end()) cur_v = *v;
-            <span class="kw">else</span> <span class="kw">break</span>;
-        }
-    }
-}</code></pre></div>
-<p>and the helper function <em>findFixP</em> is:</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">int</span> Graph::findFixP(vector&lt;<span class="dt">int</span>&gt; cand) <span class="dt">const</span> {
-    vector&lt;<span class="dt">int</span>&gt; connections;
-    connections.resize(cand.size());
-
-    <span class="co">// This is necessary for the set_intersection function</span>
-    sort(cand.begin(),cand.end());
-
-    <span class="co">// Auxiliar lambda function</span>
-    <span class="kw">auto</span> intersection = [&amp;cand, <span class="kw">this</span>](<span class="dt">int</span> x) -&gt; <span class="dt">int</span> {
-        <span class="dt">const</span> vector&lt;<span class="dt">int</span>&gt;&amp; x_edges = <span class="kw">this</span>-&gt;getEdges(x);
-        vector&lt;<span class="dt">int</span>&gt; intersection;
-
-        set_intersection(x_edges.begin(), x_edges.end(),
-                         cand.begin(), cand.end(),
-                         back_inserter(intersection));
-        <span class="kw">return</span> intersection.size();
-    };
-
-    <span class="co">// Create an auxiliar vector with the intersection sizes</span>
-    transform(cand.begin(),cand.end(),connections.begin(),intersection);
-
-    <span class="co">// Find the maximum size and return the corresponding edge</span>
-    vector&lt;<span class="dt">int</span>&gt;::const_iterator it1, it2,itmax;
-    <span class="dt">int</span> max = <span class="dv">-1</span>;
-    itmax = cand.end();
-    <span class="kw">for</span>(it1=cand.begin(),it2=connections.begin(); it1!=cand.end(); ++it1,++it2){
-        <span class="kw">if</span>(max &lt; *it2){
-            max = *it2;
-            itmax = it1;
-        }
-    }
-    <span class="kw">if</span>(itmax == cand.end()) <span class="kw">return</span> <span class="dv">-1</span>;
-    <span class="kw">else</span> <span class="kw">return</span> *itmax;
-    }
-}</code></pre></div>
-<p>For this function my first attempt was to write it using the <em>std::max_element</em> function, but I was worried that since the function we pass isn’t a transformation of the data but a comparison function (<em>less</em>), I was worried that on each comparison the set_intersection would be computed redundantly on each step.</p>
-<p>There can be, for sure, room for improvement (any C++ guru in the audience?), but I’m pretty satisfied with the obtained implementation. It reads almost as the pseudocode. I think this is because I first wrote the Haskell version and the C++ has the functional flavor in it. Would I write first the C++ version and there would be for sure lots of nasty loops and array indexes.</p>
-</div>
-]]></description>
-    <pubDate>Mon, 29 Aug 2011 11:01:00 UT</pubDate>
-    <guid>http://www.tonicebrian.com/posts/2011/08/29/maximal-clique-enumeration-using-c0x-and-the-stl.html</guid>
     <dc:creator>Toni Cebrián</dc:creator>
 </item>
 

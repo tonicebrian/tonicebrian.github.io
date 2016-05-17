@@ -184,13 +184,13 @@ If we plot _jackard2_ we have an approximation based on the number of shingles:
 
 OK, let me summarize a little bit.
 
-  1. You came here because you have a problem of comparing and object against N different objects and N is very large. 
+  1. You came here because you have the problem of comparing an object against N different objects and N is very large. 
   2. The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.
   3. You want a cheap procedure for computing 2)
 
-So the solution is to transform each object into a set of _c _different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.
+So the solution is to transform each object into a set of *c* different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.
 
-Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number _c_. But we still have to perform N comparisons against the N individuals in the population. Wouldn't it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That's possible with the use of **bands** but since this post is already very long, I'll leave that for another post.
+Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number *c*. But we still have to perform N comparisons against the N individuals in the population. Wouldn't it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That's possible with the use of **bands** but since this post is already very long, I'll leave that for another post.
 
 
 #### References

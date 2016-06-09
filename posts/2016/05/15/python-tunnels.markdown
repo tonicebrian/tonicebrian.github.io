@@ -111,7 +111,7 @@ server = SSHTunnelForwarder(
    (HOST_A, 22),
    ssh_username=USER_IN_A, 
    ssh_private_key="~/.ssh/id_rsa",
-   remote_bind_address=(HOST_B, PORT_B
+   remote_bind_address=(HOST_B, PORT_B),
    local_bind_address=('',MY_LOCAL_PORT),
    logger=logging.getLogger("devnull") 
    )

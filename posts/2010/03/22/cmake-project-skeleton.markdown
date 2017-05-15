@@ -13,7 +13,7 @@ When creating a new project from scratch, there are a lot of tasks that are repe
 
 **Sample project**
 
-You can access the project [here](http://bitbucket.org/ancechu/cmake_sample_project/overview/). Just clone it and start the hacking.
+You can access the project [here](https://bitbucket.org/tonicebrian/cmake_sample_project/overview). Just clone it and start the hacking.
 
 **Directory structure**
 

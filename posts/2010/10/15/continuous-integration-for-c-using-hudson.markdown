@@ -21,7 +21,7 @@ At this point you should have a newly installed Ubuntu 10.04 up and running. The
 
   * Sun's Java SDK, to run the Tomcat server
   * Tomcat 6, it hosts Hudson
-  * [Mercurial](http://mercurial.selenic.com/), the example project is hosted on [Bitbucket.org](http://bitbucket.org/ancechu/cmake_sample_project) but you can use whichever
+  * [Mercurial](http://mercurial.selenic.com/), the example project is hosted on [Bitbucket.org](http://bitbucket.org/tonicebrian/cmake_sample_project) but you can use whichever
   * [CMake](http://www.cmake.org/), the multiplatform build system used in the example
   * [CppUnit](http://sourceforge.net/apps/mediawiki/cppunit/index.php?title=Main_Page), testing library for those beautiful unit tests
   * [CCCC](http://sourceforge.net/projects/cccc/), application to calculate cyclomatic complexity of our code
@@ -110,7 +110,7 @@ Time to monitor an existing project for continuous integration. Here, we will us
 
   1. Select a name for your project (`Calc`) and chose the option **Build a free-style software project**
   2. Put whatever description you want. Check also the **Discard old builds**, CI is about monitoring your actual project health not about having a build historical. I usually put 50 in the **Max # of builds to keep**
-  3. In the** Source Code Management** section, select **Mercurial** as your VCS and put `http://bitbucket.org/ancechu/cmake_sample_project` as the** Repository URL** in the branch put, default.
+  3. In the** Source Code Management** section, select **Mercurial** as your VCS and put `http://bitbucket.org/tonicebrian/cmake_sample_project` as the** Repository URL** in the branch put, default.
   4. In the **Build Triggers **section, I like almost instant reaction to a build break. Hudson continuously polls the Mercurial server for changes, and when one happens it checkouts and builds the entire project. Select **Poll SCM** and in the Schedule write *** * * * * **. It means poll every single minute the repository.
   5. Ok, so here are the specific steps to build your project:
 
@@ -179,7 +179,7 @@ Time to monitor an existing project for continuous integration. Here, we will us
         out.close()
         ```
 
-I have created a [Mercurial project ](https://bitbucket.org/ancechu/valgrind-reports-to-xunit)where improvements to this script will be checked in. Please contribute!!
+I have created a [Mercurial project ](https://bitbucket.org/tonicebrian/valgrind-reports-to-xunit)where improvements to this script will be checked in. Please contribute!!
 
 Update: I've included in the code base the XSL that is mentioned in the comments. Use whatever approach is more useful to you.
 

@@ -85,7 +85,7 @@ server <span class="op">=</span> SSHTunnelForwarder(
    (HOST_A, <span class="dv">22</span>),
    ssh_username<span class="op">=</span>USER_IN_A, 
    ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,
-   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B
+   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B),
    local_bind_address<span class="op">=</span>(<span class="st">''</span>,MY_LOCAL_PORT),
    logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) 
    )

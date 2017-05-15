@@ -202,11 +202,11 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <h3 id="lost">Lost?</h3>
 <p>OK, let me summarize a little bit.</p>
 <ol style="list-style-type: decimal">
-<li>You came here because you have a problem of comparing and object against N different objects and N is very large. </li>
+<li>You came here because you have the problem of comparing an object against N different objects and N is very large. </li>
 <li>The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.</li>
 <li>You want a cheap procedure for computing 2)</li>
 </ol>
-<p>So the solution is to transform each object into a set of _c _different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
+<p>So the solution is to transform each object into a set of <em>c</em> different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
 <p>Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number <em>c</em>. But we still have to perform N comparisons against the N individuals in the population. Wouldn’t it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That’s possible with the use of <strong>bands</strong> but since this post is already very long, I’ll leave that for another post.</p>
 <h4 id="references">References</h4>
 <ol style="list-style-type: decimal">

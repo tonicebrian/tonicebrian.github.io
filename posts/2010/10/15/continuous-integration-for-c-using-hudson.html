@@ -41,7 +41,7 @@
 <ul>
 <li>Sun’s Java SDK, to run the Tomcat server</li>
 <li>Tomcat 6, it hosts Hudson</li>
-<li><a href="http://mercurial.selenic.com/">Mercurial</a>, the example project is hosted on <a href="http://bitbucket.org/ancechu/cmake_sample_project">Bitbucket.org</a> but you can use whichever</li>
+<li><a href="http://mercurial.selenic.com/">Mercurial</a>, the example project is hosted on <a href="http://bitbucket.org/tonicebrian/cmake_sample_project">Bitbucket.org</a> but you can use whichever</li>
 <li><a href="http://www.cmake.org/">CMake</a>, the multiplatform build system used in the example</li>
 <li><a href="http://sourceforge.net/apps/mediawiki/cppunit/index.php?title=Main_Page">CppUnit</a>, testing library for those beautiful unit tests</li>
 <li><a href="http://sourceforge.net/projects/cccc/">CCCC</a>, application to calculate cyclomatic complexity of our code</li>
@@ -88,7 +88,7 @@
 <ol style="list-style-type: decimal">
 <li>Select a name for your project (<code>Calc</code>) and chose the option <strong>Build a free-style software project</strong></li>
 <li>Put whatever description you want. Check also the <strong>Discard old builds</strong>, CI is about monitoring your actual project health not about having a build historical. I usually put 50 in the <strong>Max # of builds to keep</strong></li>
-<li>In the** Source Code Management** section, select <strong>Mercurial</strong> as your VCS and put <code>http://bitbucket.org/ancechu/cmake_sample_project</code> as the** Repository URL** in the branch put, default.</li>
+<li>In the** Source Code Management** section, select <strong>Mercurial</strong> as your VCS and put <code>http://bitbucket.org/tonicebrian/cmake_sample_project</code> as the** Repository URL** in the branch put, default.</li>
 <li>In the <strong>Build Triggers </strong>section, I like almost instant reaction to a build break. Hudson continuously polls the Mercurial server for changes, and when one happens it checkouts and builds the entire project. Select <strong>Poll SCM</strong> and in the Schedule write *** * * * * **. It means poll every single minute the repository.</li>
 <li><p>Ok, so here are the specific steps to build your project:</p>
 <ol style="list-style-type: decimal">
@@ -139,7 +139,7 @@ out.write(<span class="st">'&lt;/testsuite&gt;</span><span class="ch">\n</span><
 out.close()</code></pre></div></li>
 </ol></li>
 </ol>
-<p>I have created a <a href="https://bitbucket.org/ancechu/valgrind-reports-to-xunit">Mercurial project</a>where improvements to this script will be checked in. Please contribute!!</p>
+<p>I have created a <a href="https://bitbucket.org/tonicebrian/valgrind-reports-to-xunit">Mercurial project</a>where improvements to this script will be checked in. Please contribute!!</p>
 <p>Update: I’ve included in the code base the XSL that is mentioned in the comments. Use whatever approach is more useful to you.</p>
 <ol start="6" style="list-style-type: decimal">
 <li><p>The final step is to run the Post build actions that create the visual reports of the build process. Check the following items</p>

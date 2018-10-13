@@ -5,6 +5,7 @@ import           Hakyll
 import           Hakyll.Web.Pandoc
 import           Text.Pandoc.Options
 import qualified Data.Map as M
+import           Data.Maybe
 
 -- Deploy
 config :: Configuration
@@ -122,8 +123,8 @@ postCtx =
 --------------------------------------------------------------------------------
 mathCtx :: Context a
 mathCtx = field "mathjax" $ \item -> do
-    metadata <- getMetadata $ itemIdentifier item
-    return $ if "mathjax" `M.member` metadata
+    metadata <- getMetadata $ itemIdentifier item 
+    return $ if isJust $ M.lookup "mathjax" metadata
                   then "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"></script>"
                   else ""
 

@@ -1,4 +1,4 @@
-﻿$("#rotate-fade-in").Morphext({
+$("#rotate-fade-in").Morphext({
     animation: "fadeIn",
     separator: ",",
     speed: 3000,

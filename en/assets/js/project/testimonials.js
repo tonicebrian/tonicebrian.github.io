@@ -1,4 +1,4 @@
-﻿$('.testimonials-slider').slick({
+$('.testimonials-slider').slick({
     autoplay: true,
     dots: false,
     infinite: true,

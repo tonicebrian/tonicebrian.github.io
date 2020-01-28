@@ -124,7 +124,7 @@ postCtx =
 mathCtx :: Context a
 mathCtx = field "mathjax" $ \item -> do
     metadata <- getMetadata $ itemIdentifier item 
-    return $ if isJust $ M.lookup "mathjax" metadata
+    return $ if isJust $ lookupString "mathjax" metadata
                   then "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"></script>"
                   else ""
 

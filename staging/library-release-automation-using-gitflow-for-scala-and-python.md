@@ -43,9 +43,28 @@ develop and master will be mostly the same, we need to mark when a new "batch"
 was produced, i.e. tag commits in master with versions.
 
 Those versions must follow [Semantic Versioning](https://semver.org/) using the
-usual triple number schema. 
+usual triple number schema. In order to help with the semantic versioning and
+having a sound default it is advised to install this set of [gitflow
+hooks](https://github.com/jaspernbrouwer/git-flow-hooks) for bumping versions
+automatically without having to track numbers by hand.
 
-Here I explain the procedure mostly inspired by the blog post [Painless release
-with SBT](http://blog.byjean.eu/2015/07/10/painless-release-with-sbt.html) and
-some [gitflow hooks](https://github.com/jaspernbrouwer/git-flow-hooks).
+# Setup
+
+In order to illustrate the procedure let's follow through an example. Say that
+we have an HTTP server in Scala and that we write a python client to exercise
+it. We lay both systems in the same repo in folders:
+
+```
+.
+├── client
+└── server
+```
+
+For the server let's create something that can compile:
+
+```
+$ sbt new scala/scala-seed.g8
+```
+
+
 

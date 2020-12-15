@@ -5,8 +5,9 @@ cabal-version:      >= 1.10
 
 executable site
   main-is:          site.hs
-  build-depends:    base == 4.*
-                  , hakyll == 4.7.*
+  build-depends:    base
+                  , text
+                  , hakyll
                   , pandoc
                   , containers
   ghc-options:      -threaded

@@ -13,5 +13,15 @@ ghci -pgmL spp.py -x lhs <fichero>.rst
 Tanto el script como la forma de ejecutarlo has sido inspirados por [este blog post](http://blog.incubaid.com/2011/10/17/literate-programming-using-sphinx-and-haskell/). 
 
 
+How to generate the site
+========================
+
+Execute:
+
+```
+stack build
+stack exec site build
+```
+
 
 

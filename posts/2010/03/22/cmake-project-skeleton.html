@@ -39,10 +39,7 @@
 <p>You can access the project <a href="https://bitbucket.org/tonicebrian/cmake_sample_project/overview">here</a>. Just clone it and start the hacking.</p>
 <p><strong>Directory structure</strong></p>
 <p>Recently I have been working with Maven for Java development. I love the idea of Convention over Configuration (<a href="http://en.wikipedia.org/wiki/Convention_over_configuration">CoC</a>). When coding, there are zillions of things you have to put in your head, why should you waste your precious brain cycles remembering in which folder are those configuration files your colleague created last week. You agree on an <strong>arbitrary</strong> convention and you stick to it. Suddenly some neurons are freed and you can use them to learn the next framework. When organizing my folders I have followed the Maven conventions, one big CMakeLists.txt file in the root directory, a src folder divided into main and test having each of them subfolders on a “per-technology” basis. Object files and executables go to a separated folder. In the figure you can see the directories structure.</p>
-<div class="figure">
-<img src="CMakeProjectStructure.png" />
-
-</div>
+<p><img src="CMakeProjectStructure.png" /></p>
 <p><strong>Unit testing</strong></p>
 <p>In order to provide some functionality, the project creates a dynamic library with the functionality of a simple calculator. To test that this functionality works properly, a unit test has been created using the CppUnit framework. The project builds a test driver called UnitTester. This executable can be run without parameters and then it runs all the tests that were previously registered using the ﻿﻿﻿CPPUNIT_TEST_SUITE_REGISTRATION. If you want to run only a given set you specify it in the command line, useful for testing the test you are working on.</p>
 <p>I don’t use the CTest functionality in this project and so, the _make test _command does not work. I did this because I preferred to have an executable in the root binary folder instead of buried in the folder structure. Some situations like running Valgrind to check for memory leaks or controlling the exact location of the executable compensate the change.</p>

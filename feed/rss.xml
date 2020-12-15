@@ -7,8 +7,155 @@
         <description><![CDATA[My personal blog where I talk mostly about programming, machine learning and other things]]></description>
         <atom:link href="http://www.tonicebrian.com/feed/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sun, 15 May 2016 19:48:46 UT</lastBuildDate>
+        <lastBuildDate>Tue, 15 Dec 2020 19:48:46 UT</lastBuildDate>
         <item>
+    <title>Creating eDSLs in Haskell using the Tagless Final approach</title>
+    <link>http://www.tonicebrian.com/posts/2020/12/15/dominion.html</link>
+    <description><![CDATA[<div class="blog-post">
+  <h2 class="blog-post-title">
+    Creating eDSLs in Haskell using the Tagless Final approach
+  </h2>
+  <p class="blog-post-meta">
+    Posted on December 15, 2020
+    
+  </p>
+  <h1 id="introduction">Introduction</h1>
+<p>After watching this video, I’ve bitten the bullet and I’m down the rabbit hole learning about <a href="https://softwaremill.com/free-tagless-compared-how-not-to-commit-to-monad-too-early/">Free Monads and Tagless final</a> in order to learn how to create eDSLs in Haskell.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/0aBWXqiuKR4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
+<p>Although following the video is of moderate complexity, actually learning to apply those concepts is more difficult. So I decided to replicate those steps as a kata exercise in order to internalize what was exposed there.</p>
+<p>The author has a repo with all the things lined up in a final stage at <a href="https://github.com/zainab-ali/domainion">Github</a> but the code there is a bit different from what is being explained in the video, for instance the <code>ResourceSYM</code> doesn’t exist in the final version, so that was another reason for the kata.</p>
+<p>This post was written in markdown and you need to install <a href="https://github.com/sol/markdown-unlit">markdown-unlit</a> to tangle the code into the GHCI interpreter. The original markdown is in the repo associated to these github pages.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>$ <span class="ex">stack</span> exec --package lens --package mtl -- ghci -x lhs -pgmL markdown-unlit dominion.md</span></code></pre></div>
+<h1 id="the-problem">The problem</h1>
+<p>At <a href="https://youtu.be/0aBWXqiuKR4?t=100">1:40</a> she exposes that using a card in a modern cards game involves just following a set of instructions that change the game state. You read what’s in the card and the game changes somehow. So as every programmer wants to do, she creates in the video a language describing cards in the game <a href="https://boardgamegeek.com/boardgame/36218/dominion">Dominion</a>.</p>
+<p>Let’s start by defining some language pragmas and importing libraries.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE TemplateHaskell #-}</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">-- Required for deriving lenses</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DeriveGeneric #-}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="co">-- Required for constructing newtypes</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleInstances #-}</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="ot">{-# LANGUAGE GeneralizedNewtypeDeriving #-}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="co">-- We want to use forall quantification</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="co">-- Required for using forall quantification in Int</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="ot">{-# LANGUAGE QuantifiedConstraints #-}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="ot">{-# LANGUAGE RankNTypes #-}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a><span class="ot">{-# LANGUAGE RebindableSyntax #-}</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Dominion</span> <span class="kw">where</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Lens</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.State</span> <span class="kw">hiding</span> (modify)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Control.Monad.State</span> <span class="kw">as</span> <span class="dt">St</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.Trans.State.Lazy</span> (<span class="dt">StateT</span>(..))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Newtype.Generics</span> (pack, unpack)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">GHC.Generics</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> ((+), (-))</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Prelude</span> <span class="kw">as</span> <span class="dt">P</span></span></code></pre></div>
+<h2 id="modeling-the-festival-card">Modeling the Festival Card</h2>
+<figure>
+<img src="dominion-festival-card.png" alt="" /><figcaption>Festival Card</figcaption>
+</figure>
+<p>One approach to model effects in tha game is to use the <code>StateT</code> monad transformer holding a state for the Game and the IO monad for rendering and taking input. This is fine but you’ll face problems if you want to extend the set of cards in the future and being back compatible with existing ones (ie. the <a href="https://en.wikipedia.org/wiki/Expression_problem">expression problem</a>)</p>
+<p>At <a href="https://youtu.be/0aBWXqiuKR4?t=404">6:44</a> she introduces what would be the Initial Encoding approach in <a href="http://okmij.org/ftp/tagless-final/course/lecture.pdf">the original paper from Oleg Kiselov</a>, but then she shows the problems you face when you try to extend the language with extra constructs. She says that we can overcome this extension problem by using Fixed Point encoding but she is going to turn into the Tagless encoding using Type classes.</p>
+<p>So into the language, we will need to represent integers and operations between them:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">IntSym</span> repr <span class="kw">where</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ot">    lit ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> repr</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="ot">    (+) ::</span> repr <span class="ot">-&gt;</span> repr <span class="ot">-&gt;</span> repr</span></code></pre></div>
+<p>When we use this language we will have something like</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">exp1 ::</span> <span class="dt">IntSym</span> repr <span class="ot">=&gt;</span> repr</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>exp1 <span class="ot">=</span> (lit <span class="dv">1</span> <span class="op">+</span> lit <span class="dv">2</span>) <span class="op">+</span> lit <span class="dv">3</span></span></code></pre></div>
+<p>Then if we want to extend the language to accomodate substraction we can add a new term to our language</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">MinusSym</span> repr <span class="kw">where</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="ot">    (-) ::</span> repr <span class="ot">-&gt;</span> repr <span class="ot">-&gt;</span> repr</span></code></pre></div>
+<p>And both languages compose nicely if we add the restrictions</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">exp2 ::</span> (<span class="dt">IntSym</span> repr, <span class="dt">MinusSym</span> repr) <span class="ot">=&gt;</span> repr</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>exp2 <span class="ot">=</span> (lit <span class="dv">1</span> <span class="op">-</span> lit <span class="dv">2</span>) <span class="op">+</span> lit <span class="dv">3</span></span></code></pre></div>
+<p>Those <code>exp1</code> and <code>exp2</code> are just constructs in our language, they are just expressions, but we are interested in evaluating those expressions in order to produce a result. With the Tagless Final approach, creating such interpreter involves coding an interpreter in the form of an instance of those type classes for the final result we want to accomplish:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">IntSym</span> <span class="dt">Int</span> <span class="kw">where</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>    lit n <span class="ot">=</span> n</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    (<span class="op">+</span>) <span class="ot">=</span> (<span class="op">P.+</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">MinusSym</span> <span class="dt">Int</span> <span class="kw">where</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>    (<span class="op">-</span>) <span class="ot">=</span> (<span class="op">P.-</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>    </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="ot">eval ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>eval <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
+<p>Then if we run our interpreter against a expression of the language:</p>
+<pre><code>ghci&gt; eval expr2
+2</code></pre>
+<p>So getting back to the Festival card at the beginning, our <code>IntSym</code> language is a model for Integers, so all those <code>+2</code> and <code>+1</code> elements of our card can be expressed between integers but we still lack terms for <code>action</code>, <code>buy</code> and <code>gold</code>. For that we will create our Resources language</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">ResourcesSym</span> repr <span class="kw">where</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="ot">    action ::</span> repr</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="ot">    buy ::</span> repr</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="ot">    gold ::</span> repr</span></code></pre></div>
+<p>with this we can create all the lines in the card:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">plusTwoActions ::</span> (<span class="dt">IntSym</span> repr, <span class="dt">ResSym</span> repr) <span class="ot">=&gt;</span> repr</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>plusTwoActions <span class="ot">=</span> action <span class="op">+</span> lit <span class="dv">2</span></span></code></pre></div>
+<p>Ok, if we want to evaluate this we cannot use the evaluators we used for the <code>IntSym</code> language because they don’t make any sense for the <code>ResourceSym</code> terms. Moreover we want to interpret this language in terms of the <code>StateT</code> that drives our game so we need to create a different interpreter.</p>
+<p>But before moving to how to create the new interpreter we need to still fix the problem of how to make invalid states non representable <a href="https://youtu.be/0aBWXqiuKR4?t=714">min 11:54</a> (like <code>action + action</code> that right now are valid expressions). And as a remainder the invalidity is linked to the semantics of the language, ie. the expression <code>lit 2 + lit 1</code> was a perfectly valid expressions when the semantics was the algebra of integers, but is an invalid expression when we think about how to change the state of a game. What does <code>lit 1 + lit 2</code> mean in the context of chaning state of a card game?</p>
+<p>All the sentences in the Festival card look like a <em>modification</em> of a <em>resource</em> by a <em>function</em>. So in order to get valid expressions we will create a language for such statements. The enforment will be done through types.</p>
+<p>Let me create the game state that will help us run these examples (by no means this is a valid representation of the state of a game like Dominion):</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Game</span> <span class="ot">=</span> <span class="dt">Game</span> {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="ot">    _actions ::</span> <span class="dt">Int</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>} <span class="kw">deriving</span> (<span class="dt">Show</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>makeLenses &#39;<span class="dt">&#39;Game</span></span></code></pre></div>
+<p>For this particular example, the resources could be seen as addresses of some properties in the state of a Player. Seen in such way, for instance, we will have a definition like:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">GameLens</span> a <span class="ot">=</span> <span class="dt">GameLens</span> (<span class="dt">Lens&#39;</span> <span class="dt">Game</span> a)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">ResourceSym</span> repr <span class="kw">where</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a><span class="ot">    action ::</span> repr (<span class="dt">GameLens</span> <span class="dt">Int</span>)</span></code></pre></div>
+<p>We need to wrap the lens in a Newtype instance so we can use lenses in typeclasses. Also the pragma <code>GeneralizedNewtypeDeriving</code> needs to be included</p>
+<p>This means that our <code>repr</code> will be a type contaning a <code>Lens'</code>. That lens will be a simple one that provides setters and getters from a <code>Game</code> type to a property of type <code>Int</code> (the action in this case)</p>
+<p>So with this type we can now model in our language those sentences from the card that modify player’s state:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">StatementSym</span> repr <span class="kw">where</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="ot">  modify ::</span> repr (<span class="dt">GameLens</span> <span class="dt">Int</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>            <span class="ot">-&gt;</span> (repr <span class="dt">Int</span> <span class="ot">-&gt;</span> repr <span class="dt">Int</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>            <span class="ot">-&gt;</span> repr ()</span></code></pre></div>
+<p>When defining interpreter instances for the StateT monad transformer we have to write</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">IntSym</span> (<span class="dt">State</span> <span class="dt">Game</span> <span class="dt">Int</span>) <span class="kw">where</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>    lit i <span class="ot">=</span> <span class="fu">pure</span> i</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>    x <span class="op">+</span> y <span class="ot">=</span> <span class="kw">do</span> </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>      x_int <span class="ot">&lt;-</span> x</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>      y_int <span class="ot">&lt;-</span> y</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>      P.return (x_int <span class="op">P.+</span> y_int)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>      </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">ResourceSym</span> (<span class="dt">State</span> <span class="dt">Game</span>) <span class="kw">where</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>  action <span class="ot">=</span> <span class="fu">pure</span> (<span class="dt">GameLens</span> actions)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>  </span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">StatementSym</span> (<span class="dt">State</span> <span class="dt">Game</span>) <span class="kw">where</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a>  modify mlens f <span class="ot">=</span> <span class="kw">do</span> (<span class="dt">GameLens</span> lens) <span class="ot">&lt;-</span> mlens</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>                      next <span class="ot">&lt;-</span> f (use lens)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true"></a>                      St.modify (set lens next)</span></code></pre></div>
+<p>With this we can create a new expression in this language of cards</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">plusTwoActions ::</span> (</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="dt">ResourceSym</span> repr,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="dt">IntSym</span> (repr <span class="dt">Int</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>  <span class="dt">StatementSym</span> repr) <span class="ot">=&gt;</span> repr ()</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>plusTwoActions <span class="ot">=</span> modify action (<span class="op">+</span> lit <span class="dv">2</span>)</span></code></pre></div>
+<p>When we evaluate this language in the context of the <code>State Game</code> monad, we have a real <code>State Game</code> monad ready to being executed or unrolled. Let’s see how to get that:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="co">-- Our interpreter</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a><span class="ot">eval ::</span> <span class="dt">State</span> <span class="dt">Game</span> a <span class="ot">-&gt;</span> <span class="dt">State</span> <span class="dt">Game</span> a</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>eval <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a><span class="ot">initialGame ::</span> <span class="dt">Game</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>initialGame <span class="ot">=</span> <span class="dt">Game</span> { _actions <span class="ot">=</span> <span class="dv">0</span> }</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>modifiedGame <span class="ot">=</span> execState (eval plusTwoActions) initialGame</span></code></pre></div>
+<p>And you can check that <code>modifiedGame</code> is <code>Game { _actions = 2 }</code>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I was first exposed to the Tagless Final approach in the excellent series of posts <a href="https://thomashoneyman.com/guides/real-world-halogen/">Real World Halogen</a>. The author uses type classes to model capabilities of the application (creating logs, writing to a DB) with the benefit that later the actual implementations (ie. the interpreters) can change at will. Another benefit is testing, you don’t need mocking libraries like in other programming languages, you just swap the intepreter by another one where effects are fully controlled.</p>
+<p>Free monads and tagless final are kind of equivalent and interchangeable, you could even use them in different parts of your program without any problem, but from what I’ve been reading people think that tagless final is superior (see for instance <a href="https://www.youtube.com/watch?v=1h11efA4k8E">this talk</a>). But at the same time I’m currently reading <a href="https://leanpub.com/functional-design-and-architecture">Functional Design and Architecture</a> were free monads are the core of all designs and I’ve also discovered <a href="https://github.com/polysemy-research/polysemy#readme">Polysemy</a> that promises to remove all the bolierplate code associated with Free Monads and get the benefits of having you eDSL in memory.</p>
+<p>So for now I will go for the Tagless Final approach although I’ll keep an eye on Polysemy and Free Monads.</p>
+</div>
+]]></description>
+    <pubDate>Tue, 15 Dec 2020 19:48:46 UT</pubDate>
+    <guid>http://www.tonicebrian.com/posts/2020/12/15/dominion.html</guid>
+    <dc:creator>Toni Cebrián</dc:creator>
+</item>
+<item>
     <title>Python tunneling</title>
     <link>http://www.tonicebrian.com/posts/2016/05/15/python-tunnels.html</link>
     <description><![CDATA[<div class="blog-post">
@@ -27,65 +174,65 @@
 pip install paramiko</code></pre>
 <p>All the instructions in this post assume that you have in your <code>$HOME/.ssh/config</code> file the required info for connecting to a remote machine so you don’t risk of publishing usernames and passwords when pushing to a repo.</p>
 <p>Here is the snippet that creates the connection:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="co"># Create a SSH connection</span>
-<span class="im">import</span> paramiko
-<span class="im">import</span> os
-
-ssh <span class="op">=</span> paramiko.SSHClient()
-ssh._policy <span class="op">=</span> paramiko.WarningPolicy()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-ssh_config <span class="op">=</span> paramiko.SSHConfig()
-user_config_file <span class="op">=</span> os.path.expanduser(<span class="st">&quot;~/.ssh/config&quot;</span>)
-<span class="cf">if</span> os.path.exists(user_config_file):
-    <span class="cf">with</span> <span class="bu">open</span>(user_config_file) <span class="im">as</span> f:
-        ssh_config.parse(f)
-
-cfg <span class="op">=</span> {<span class="st">&#39;hostname&#39;</span>: THE_HOST_NAME_IN_CONFIG}
-
-user_config <span class="op">=</span> ssh_config.lookup(cfg[<span class="st">&#39;hostname&#39;</span>])
-cfg[<span class="st">&quot;hostname&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;hostname&quot;</span>]
-cfg[<span class="st">&quot;username&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;user&quot;</span>]
-key<span class="op">=</span>paramiko.RSAKey.from_private_key_file(privateKey)
-cfg[<span class="st">&quot;pkey&quot;</span>] <span class="op">=</span> key
-
-<span class="cf">if</span> <span class="st">&#39;proxycommand&#39;</span> <span class="op">in</span> user_config:
-   cfg[<span class="st">&#39;sock&#39;</span>] <span class="op">=</span> paramiko.ProxyCommand(user_config[<span class="st">&#39;proxycommand&#39;</span>])
-
-ssh.<span class="ex">connect</span>(<span class="op">**</span>cfg)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co"># Create a SSH connection</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="im">import</span> paramiko</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="im">import</span> os</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>ssh <span class="op">=</span> paramiko.SSHClient()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>ssh._policy <span class="op">=</span> paramiko.WarningPolicy()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>ssh_config <span class="op">=</span> paramiko.SSHConfig()</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>user_config_file <span class="op">=</span> os.path.expanduser(<span class="st">&quot;~/.ssh/config&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a><span class="cf">if</span> os.path.exists(user_config_file):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    <span class="cf">with</span> <span class="bu">open</span>(user_config_file) <span class="im">as</span> f:</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>        ssh_config.parse(f)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>cfg <span class="op">=</span> {<span class="st">&#39;hostname&#39;</span>: THE_HOST_NAME_IN_CONFIG}</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>user_config <span class="op">=</span> ssh_config.lookup(cfg[<span class="st">&#39;hostname&#39;</span>])</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>cfg[<span class="st">&quot;hostname&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;hostname&quot;</span>]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>cfg[<span class="st">&quot;username&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;user&quot;</span>]</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>key<span class="op">=</span>paramiko.RSAKey.from_private_key_file(privateKey)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>cfg[<span class="st">&quot;pkey&quot;</span>] <span class="op">=</span> key</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a><span class="cf">if</span> <span class="st">&#39;proxycommand&#39;</span> <span class="kw">in</span> user_config:</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>   cfg[<span class="st">&#39;sock&#39;</span>] <span class="op">=</span> paramiko.ProxyCommand(user_config[<span class="st">&#39;proxycommand&#39;</span>])</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>ssh.<span class="ex">connect</span>(<span class="op">**</span>cfg)</span></code></pre></div>
 <p>And then you can execute remote commands. For instance, grep the logs for a given day and retrieve the hits to a given resource. This could be accomplished doing:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">cmd <span class="op">=</span> <span class="st">&#39;sudo grep &quot;{}&quot; /var/log/httpd/{} | grep myURL&#39;</span>.<span class="bu">format</span>(dayUnderStudy, access_log_file)
-stdin, stdout, stderr <span class="op">=</span> ssh.exec_command(cmd)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>cmd <span class="op">=</span> <span class="st">&#39;sudo grep &quot;</span><span class="sc">{}</span><span class="st">&quot; /var/log/httpd/</span><span class="sc">{}</span><span class="st"> | grep myURL&#39;</span>.<span class="bu">format</span>(dayUnderStudy, access_log_file)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>stdin, stdout, stderr <span class="op">=</span> ssh.exec_command(cmd)</span></code></pre></div>
 <p>And then manipulating the <code>stdout</code> variable with pure Python code.</p>
 <p>Once done, close the connection in your notebook.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">ssh.close()</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>ssh.close()</span></code></pre></div>
 <h2 id="creating-a-tunnel-to-a-remote-machine-in-order-to-access-a-third-machine">Creating a tunnel to a remote machine in order to access a third machine</h2>
 <p>This is the classical setup where you want to access databases that are only visible from the machines in your cluster. This can be accomplished by Paramiko itself but I found easier to setup the forwarding with a library that is itself using Paramiko underneathi, <a href="https://pypi.python.org/pypi/sshtunnel">sshtunnel</a>.</p>
 <pre><code>pip install sshtunnel</code></pre>
 <p>So the setup is, we ssh to a machine A that has visibility access to a second machine B. Usually what we want is to do is to map a port in B, for instance MySQL port 3306, to a local free port in our host. We just create a server that maps those ports</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sshtunnel <span class="im">import</span> SSHTunnelForwarder
-<span class="im">import</span> logging
-
-server <span class="op">=</span> SSHTunnelForwarder(
-   (HOST_A, <span class="dv">22</span>),
-   ssh_username<span class="op">=</span>USER_IN_A, 
-   ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,
-   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B),
-   local_bind_address<span class="op">=</span>(<span class="st">&#39;&#39;</span>,MY_LOCAL_PORT),
-   logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) 
-   )
-
-server.start()</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="im">from</span> sshtunnel <span class="im">import</span> SSHTunnelForwarder</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="im">import</span> logging</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>server <span class="op">=</span> SSHTunnelForwarder(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>   (HOST_A, <span class="dv">22</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>   ssh_username<span class="op">=</span>USER_IN_A, </span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>   ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>   local_bind_address<span class="op">=</span>(<span class="st">&#39;&#39;</span>,MY_LOCAL_PORT),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>   logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>   )</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>server.start()</span></code></pre></div>
 <p>If we were doing the tunneling for accessing a remote DB, using that remove access can be done by:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> MySQLdb
-conn<span class="op">=</span> MySQLdb.<span class="ex">connect</span>(host<span class="op">=</span><span class="st">&#39;127.0.0.1&#39;</span>,
-                  port<span class="op">=</span>MY_LOCAL_PORT,
-                  user<span class="op">=</span>DB_USER, 
-                  passwd<span class="op">=</span>DB_PWD,
-                  db<span class="op">=</span>DATABASE)</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="im">import</span> MySQLdb</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>conn<span class="op">=</span> MySQLdb.<span class="ex">connect</span>(host<span class="op">=</span><span class="st">&#39;127.0.0.1&#39;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>                  port<span class="op">=</span>MY_LOCAL_PORT,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>                  user<span class="op">=</span>DB_USER, </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>                  passwd<span class="op">=</span>DB_PWD,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>                  db<span class="op">=</span>DATABASE)</span></code></pre></div>
 <p>And then closing all connections:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">conn.close()
-server.stop()</code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>conn.close()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>server.stop()</span></code></pre></div>
 </div>
 ]]></description>
     <pubDate>Sun, 15 May 2016 19:48:46 UT</pubDate>
@@ -103,26 +250,17 @@ server.stop()</code></pre></div>
     Posted on November  6, 2013
     
   </p>
-  <div class="figure">
-<img src="AcmRecsys-300x42.png" />
-
-</div>
+  <p><img src="AcmRecsys-300x42.png" /></p>
 <p>It has been 3 years since I attended my last RecSys and last week I went again to <a href="http://recsys.acm.org/recsys13/">that conference</a> in Hong Kong. I came back home with lots of useful insights although to get those gems I had to go through lots of boring to death presentations. Hey guys, presenting to an audience doesn’t mean cut and pasting from your latex article directly into your beamer presentation. You have to think about how to communicate to an audience. And don’t tell me it’s about algorithms and complex mathematics, so it was <a href="http://dl.acm.org/citation.cfm?id=2507160">Harald Steck’s</a> from Netflix and it was very pedagogical. Next year make sure you think in your audience before reporting your research.</p>
 <p>This is my personal and biased review of the conference. It’s mainly what I found interesting and what it could be easily deployed at my current employer, <a href="http://www.softonic.com">Softonic</a>.</p>
 <p>On Saturday we had an excellent tutorial about <a href="http://www.slideshare.net/kerveros99/learning-to-rank-for-recommender-system-tutorial-acm-recsys-2013">Learning To Rank for Recommender Systems</a> by <a href="https://twitter.com/alexk_z">Alex</a>, <a href="https://twitter.com/LinasTw">Linas</a>and <a href="https://twitter.com/yueshi_nl">Shi</a>. Here I’m completely biased because I’ve worked with them and I know how good they are, but this tutorial was really interesting and full of stuff. I recommend it for a very good introduction to this complex topic.</p>
-<div class="figure">
-<img src="calle-hong-kong-small-258x300.png" />
-
-</div>
+<p><img src="calle-hong-kong-small-258x300.png" /></p>
 <p>For me the most interesting session of the conference was the workshop on <a href="http://graphlab.org/lsrs2013/program/#LSRS2013">Large Scale Recommenders</a>. There was an <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_13.pdf">interesting presentation</a> about how to use Multi-armed bandits for recommending videos in a popular Dutch multimedia site. This talk was full of practical information about the technological stack for deploying bandits at scale. Some guys from eBay where presenting how do <a href="http://graphlab.org/wp-content/uploads/2013/10/paper_14.pdf">they recommend items</a> in a domain where users are open to sell whatever they want and describe it free form. They were creating fine grained clusters based mainly on the search queries. The idea was to create semantically consistent cluster of items. They identified different use cases pre-purchase and post-purchase and it seemed that this cluster solution was working very well. For us in the app domain, this also makes sense, when browsing you are interested in similar applications but after a download you are interested in complementary apps not apps in the same niche. <a href="https://twitter.com/kyrpov">Aapo Kyrölä</a> gave two excellent talks about <a href="http://www.slideshare.net/akyrola/largescale-recommendation-systems-on-just-a-pc">GraphChi</a>and about <a href="www.slideshare.net/akyrola/drunkardmob-billions-of-random-walks-on-just-a-pc">Personalized PageRank</a>for Big Data. Read them. Funny comparisons about how much it took for his laptop against giant Hadoop clusters. Main take aways, “Before doing anything, think twice” and “Don’t follow the hype, even GraphChi’s hype”.</p>
 <p>Although I was in different sessions there were other presentations during the weekend that generated Twitter action, like the <a href="http://www.slideshare.net/d0nut/open-recommendation-platform">keynote</a>in the <a href="https://sites.google.com/site/newsrec2013/">News Recommender Systems workshop</a> and the tutorial on <a href="http://www.slideshare.net/anmolbhasin/tutorial-on-people-recommendations-in-social-networks-acm-recsys-2013hong-kong">people recommendations</a> from Linkedin.</p>
 <p>From the Monday sessions I liked two papers trying to introduce diversity in the recommendations. The first <a href="http://dl.acm.org/citation.cfm?id=2507165">Trading-off Among Accuracy, Similarity, Diversity, and Long-tail: A Graph-based Recommendation Approach</a> from <a href="http://www.baidu.com/">Baidu</a> where you can model your costs for multi targeted objectives and a random walk in the graph provides the recommendations. The second paper was <a href="http://research.google.com/pubs/pub41535.html">Nonlinear Latent Factorization by Embedding Multiple User Interests</a> from Google. Here the user is described as a set of latent vectors each one describing one of the user’s interests.</p>
 <p>On Tuesday, the Microsoft’s paper, <a href="http://dl.acm.org/citation.cfm?id=2507168">Xbox Movies Recommendations: Variational Bayes Matrix Factorization with Embedded Feature Selection</a> from <a href="http://www.eng.tau.ac.il/~noamk/">Noam Koenigstein</a> was very interesting and I think we could use a similar approach for recommending software at <a href="http://www.softonic.com/">Softonic</a>. Here a probabilistic graphical model was proposed for an scenario of binary implicit feedback enriched with metadata in the form of tags. From this same author I discovered in the Large Scale Recommenders workshop the work <a href="http://www.eng.tau.ac.il/~noamk/papers/fp093-koenigstein.pdf">he has been doing</a> on using Matrix Factorization results in real time. This paper was the perfect companion to the poster he presented about <a href="http://www.eng.tau.ac.il/~noamk/papers/item_based_recsys_2013.pdf">Item-Oriented recommendations</a>. In the afternoon there was the paper <a href="http://dl.acm.org/citation.cfm?doid=2507157.2507188">Rating Support Interfaces to Improve User Experience and Recommender Accuracy</a> that focused on improving UI for recommenders for helping in eliciting true preferences. Very interesting.  Also of interest were <a href="http://www.slideshare.net/AmitSharma315/pairwise-learning-experiments-with-community-recommendation-on-linkedin">Pairwise learning in recommendations of communities</a> from Linkedin and <a href="http://www.cs.utexas.edu/~inderjit/public_papers/app_recommendation_recsys13.pdf">Which App Will You Use Next</a> that proposed a recommender system that predicts which app has higher probability of being used next based on your past behavior. It would be very interesting to pilot a widget for <a href="http://softonic-moba.softonic.com/">Moba</a>.</p>
 <p>The last day of the conference, had the Industry Session with lots of gems, like Huawei App Store using Deep Neural Networks for recommendations so they don’t spend time doing feature engineering. <a href="http://www.alibaba.com/">Alibaba</a> told that Diversity and Complementary are worse for CTR but better for conversion, so watch your KPIs. <a href="http://www.tencent.com/index_e.shtml">Tencent</a>showed all the metadata for users and items they use and the distributed hybrid algorithm they use to deliver recommendations. For us in the western world, used to the Facebooks and Googles, seeing the technology the Chinese companies are using/developing was a big surprise.</p>
-<div class="figure">
-<img src="neon_hong_kong-small-225x300.png" />
-
-</div>
+<p><img src="neon_hong_kong-small-225x300.png" /></p>
 <p>The best paper award was <a href="http://www.csie.ntu.edu.tw/~cjlin/papers/libmf.pdf">A Fast Parallel SGD for Matrix Factorization in Shared Memory Systems</a>, hardcore algorithmic approach but far from my day to day routine. I’ve mentioned before the  paper about <a href="http://dl.acm.org/citation.cfm?id=2507160">Rating-prediction and Ranking</a> from Netflix that addresses the selection bias (you are more likely to rate highly/low valued items but nothing in between) as a related sub-problem. By modeling the decision to rate you gain insight on all the unknown ratings.</p>
 <p>The last session about Scalability was the most interesting with all the papers in my ToRead list. <a href="http://dl.acm.org/citation.cfm?id=2507169">Using maximum coverage to optimize recommendation systems</a> used well known algorithms of combinatorial optimization in order to select the set of items with maximum probability of conversion. In <a href="http://dl.acm.org/citation.cfm?id=2507189">Efficient top-n recommendation for very large scale binary rated datasets</a> they presented a large scale matrix factorization algorithm for implicit datasets. This guys presented the extension to the algorithm that won the <a href="http://www.kaggle.com/c/msdchallenge">Million Song contest in Kaggle</a> so this paper must be read carefully. In <a href="http://ssc.io/wp-content/uploads/2011/12/sys024-schelter.pdf">Distributed Matrix Factorization with MapReduce using a series of Broadcast-Joins</a> it was exposed a distributed Alternating Least Squares (ALS) approach to Matrix Factorization that is going to be included in <a href="http://mahout.apache.org/">Mahout</a>. They also taught me about a toolkit for generating synthetic data, <a href="https://github.com/TU-Berlin-DIMA/myriad-toolkit/wiki">Myriad</a>,  something I have to research more carefully.</p>
 <p>And that was it!! I had a very good time and glad to meet lot of people I admire in person. Hopefully see you next year!!</p>
@@ -155,30 +293,30 @@ server.stop()</code></pre></div>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Vowel</th>
-<th align="left">Order</th>
+<th>Vowel</th>
+<th>Order</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">a</td>
-<td align="left">1</td>
+<td>a</td>
+<td>1</td>
 </tr>
 <tr class="even">
-<td align="left">e</td>
-<td align="left">2</td>
+<td>e</td>
+<td>2</td>
 </tr>
 <tr class="odd">
-<td align="left">i</td>
-<td align="left">3</td>
+<td>i</td>
+<td>3</td>
 </tr>
 <tr class="even">
-<td align="left">o</td>
-<td align="left">4</td>
+<td>o</td>
+<td>4</td>
 </tr>
 <tr class="odd">
-<td align="left">u</td>
-<td align="left">5</td>
+<td>u</td>
+<td>5</td>
 </tr>
 </tbody>
 </table>
@@ -186,30 +324,30 @@ server.stop()</code></pre></div>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Vowel</th>
-<th align="left">Order</th>
+<th>Vowel</th>
+<th>Order</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">a</td>
-<td align="left">5</td>
+<td>a</td>
+<td>5</td>
 </tr>
 <tr class="even">
-<td align="left">e</td>
-<td align="left">2</td>
+<td>e</td>
+<td>2</td>
 </tr>
 <tr class="odd">
-<td align="left">i</td>
-<td align="left">3</td>
+<td>i</td>
+<td>3</td>
 </tr>
 <tr class="even">
-<td align="left">o</td>
-<td align="left">1</td>
+<td>o</td>
+<td>1</td>
 </tr>
 <tr class="odd">
-<td align="left">u</td>
-<td align="left">4</td>
+<td>u</td>
+<td>4</td>
 </tr>
 </tbody>
 </table>
@@ -226,91 +364,88 @@ server.stop()</code></pre></div>
 <li><p>Use a pseudo-random number generator by picking a large prime number, say <span class="math inline">\(p=2147483647\)</span> and a set of coefficients <span class="math inline">\(\{a_i,b_i\}\)</span> such our hashing functions are defined as <span class="math inline">\(\pi_{i} = (a_i x + b_i) \% p\)</span></p></li>
 </ul>
 <p>In this post we will use the second kind of functions expresed in this Haskell code:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">p ::</span> <span class="dt">Int</span>
-p<span class="fu">=</span><span class="dv">2147483647</span> 
-
-<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
-coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
-
-<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
-hashFuncs <span class="fu">=</span> go coefs
-  <span class="kw">where</span>
-    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
-                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest </code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">p ::</span> <span class="dt">Int</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>p<span class="ot">=</span><span class="dv">2147483647</span> </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">coefs ::</span> [<span class="dt">Int</span>]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>coefs <span class="ot">=</span> unfoldr (<span class="dt">Just</span> <span class="op">.</span> randomR (<span class="dv">0</span>,p)) <span class="op">$</span> mkStdGen <span class="dv">0</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>hashFuncs <span class="ot">=</span> go coefs</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    go theCoefs <span class="ot">=</span> <span class="kw">let</span> (a<span class="op">:</span>b<span class="op">:</span>[],rest) <span class="ot">=</span> <span class="fu">splitAt</span> <span class="dv">2</span> theCoefs</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="op">*</span>x<span class="op">+</span>b) <span class="ot">`mod`</span> p) <span class="op">:</span> go rest </span></code></pre></div>
 <p>So, given a hashing function, which is the minimum hash over a given set? This code gives you that result</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
-minHash f <span class="fu">=</span> foldl&#39; hashAndMin maxBound
-  <span class="kw">where</span>
-    hashAndMin a b <span class="fu">=</span> min a (f b)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>minHash f <span class="ot">=</span> foldl&#39; hashAndMin <span class="fu">maxBound</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    hashAndMin a b <span class="ot">=</span> <span class="fu">min</span> a (f b)</span></code></pre></div>
 <h3 id="shingles">Shingles</h3>
 <p>OK, now you want to compare two sets, <em>A</em> and <em>B</em> to see how similar they are. The similarity measure here will be the number of items they both share, the Jackard coefficient. The time complexity of the set intersection is <span class="math inline">\(O(n+m)\)</span> if you first build a Hash Map and then query it with the second set for existence. If both sets are already sorted you can compare them in <span class="math inline">\(O(n)\)</span> <span class="math inline">\(O(m+n\log n+ m\log m)\)</span>.</p>
 <p>Can you compare them faster? Yes, but only if you want to trade accuracy. The property in the probability formula at the beginning of the post states that with probability the Jackard coefficient the min hashes of the two sets will be equal. That means that if we take <em>r</em> different hashing functions (permutations) and we name <em>s</em> the Jackard coefficient between the tow sets, the probability that all <em>k</em> hashes of each set are equal is <span class="math inline">\(s^r\)</span>. Since this is a collection of Bernoulli trials, the distribution of having <em>k</em> min hashes equal in both sets follows a Binomial distribution with density probability function equal to:</p>
 <p><span class="math display">\[f(k;r,s)= {r \choose k}s^k(1-s)^{r-k}\]</span></p>
 <p>It is known that a random variable distributed according to the binomial distribution, <span class="math inline">\(X \sim B(r,s)\)</span> has <span class="math inline">\(E[X]=rs\)</span>, so a good estimator of <span class="math inline">\(s\)</span> would be to divide the number of matches by the number of hashing functions. This would give you the estimated value of the Jackard coefficient. But before comparing two fingerprints we have to compute them:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
-shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>shingle c nums <span class="ot">=</span> [minHash f nums <span class="op">|</span> f <span class="ot">&lt;-</span> <span class="fu">take</span> c hashFuncs]</span></code></pre></div>
 <p>The shingle function gives us a set of <em>c</em> fingerprints of our original big set of numbers.</p>
 <p>So let’s see it in action. Imagine that we want to compute the Jackard coefficient between the bag of letters in the phrase <em>Humpty Dumpty sat on a wall</em> and <em>Humpty Dumpty had a great fall</em>. First let’s compute the Jackard coefficient according to the definition</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Data.List</span>
-<span class="kw">import </span><span class="dt">System.Random</span>
-<span class="kw">import </span><span class="dt">Data.Char</span>
-<span class="kw">import </span><span class="dt">Data.List</span>
-
-phrase1<span class="fu">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span>
-phrase2<span class="fu">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span>
-mkSet <span class="fu">=</span> nub <span class="fu">.</span> filter isAlpha <span class="fu">.</span> map toLower
-<span class="co">-- Set 1 is the collection of letters in the first phrase</span>
-<span class="co">-- &quot;humptydsaonw&quot;</span>
-set1 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span>
-<span class="co">-- Set 2 is the collection of letters in the second phrase</span>
-<span class="co">-- &quot;humptydagrefl&quot;</span>
-set2 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span>
-           
-jackard <span class="fu">=</span> a<span class="fu">/</span>b
-  <span class="kw">where</span>
-    a <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
-    b <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
-    
-<span class="ot">p ::</span> <span class="dt">Int</span>
-p<span class="fu">=</span><span class="dv">2147483647</span> 
-
-<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
-coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
-
-<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
-hashFuncs <span class="fu">=</span> go coefs
-  <span class="kw">where</span>
-    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
-                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest 
-
-<span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
-minHash f <span class="fu">=</span> foldl&#39; hashAndMin maxBound
-  <span class="kw">where</span>
-    hashAndMin a b <span class="fu">=</span> min a (f b)
-
-<span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
-shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]
-
-shingles1 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="fu">..</span>]
-shingles2 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="fu">..</span>]
-
-jackard2 <span class="fu">=</span> map approxJackard shingles
-  <span class="kw">where</span> 
-    shingles <span class="fu">=</span> zip shingles1 shingles2
-<span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span>
-    approxJackard (as,bs) <span class="fu">=</span> <span class="kw">let</span> pairs <span class="fu">=</span> zip as bs
-                                matches <span class="fu">=</span> filter (\(a,b) <span class="ot">-&gt;</span> a <span class="fu">==</span> b) pairs
-                                num <span class="fu">=</span> fromIntegral <span class="fu">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span>
-                                den <span class="fu">=</span> fromIntegral <span class="fu">$</span> length<span class="ot"> as ::</span> <span class="dt">Double</span>
-                            <span class="kw">in</span> num<span class="fu">/</span>den</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.Random</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Char</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>phrase1<span class="ot">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>phrase2<span class="ot">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>mkSet <span class="ot">=</span> nub <span class="op">.</span> <span class="fu">filter</span> <span class="fu">isAlpha</span> <span class="op">.</span> <span class="fu">map</span> <span class="fu">toLower</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="co">-- Set 1 is the collection of letters in the first phrase</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="co">-- &quot;humptydsaonw&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>set1 <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span> <span class="op">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a><span class="co">-- Set 2 is the collection of letters in the second phrase</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a><span class="co">-- &quot;humptydagrefl&quot;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>set2 <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span> <span class="op">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>           </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>jackard <span class="ot">=</span> a<span class="op">/</span>b</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>    a <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>  <span class="fu">length</span> (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>    b <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>  <span class="fu">length</span> (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a>    </span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a><span class="ot">p ::</span> <span class="dt">Int</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>p<span class="ot">=</span><span class="dv">2147483647</span> </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true"></a><span class="ot">coefs ::</span> [<span class="dt">Int</span>]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a>coefs <span class="ot">=</span> unfoldr (<span class="dt">Just</span> <span class="op">.</span> randomR (<span class="dv">0</span>,p)) <span class="op">$</span> mkStdGen <span class="dv">0</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a><span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true"></a>hashFuncs <span class="ot">=</span> go coefs</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true"></a>    go theCoefs <span class="ot">=</span> <span class="kw">let</span> (a<span class="op">:</span>b<span class="op">:</span>[],rest) <span class="ot">=</span> <span class="fu">splitAt</span> <span class="dv">2</span> theCoefs</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true"></a>                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="op">*</span>x<span class="op">+</span>b) <span class="ot">`mod`</span> p) <span class="op">:</span> go rest </span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true"></a><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true"></a>minHash f <span class="ot">=</span> foldl&#39; hashAndMin <span class="fu">maxBound</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true"></a>    hashAndMin a b <span class="ot">=</span> <span class="fu">min</span> a (f b)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true"></a><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true"></a>shingle c nums <span class="ot">=</span> [minHash f nums <span class="op">|</span> f <span class="ot">&lt;-</span> <span class="fu">take</span> c hashFuncs]</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true"></a>shingles1 <span class="ot">=</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true"></a>shingles2 <span class="ot">=</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true"></a></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true"></a>jackard2 <span class="ot">=</span> <span class="fu">map</span> approxJackard shingles</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true"></a>  <span class="kw">where</span> </span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true"></a>    shingles <span class="ot">=</span> <span class="fu">zip</span> shingles1 shingles2</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true"></a><span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true"></a>    approxJackard (as,bs) <span class="ot">=</span> <span class="kw">let</span> pairs <span class="ot">=</span> <span class="fu">zip</span> as bs</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true"></a>                                matches <span class="ot">=</span> <span class="fu">filter</span> (\(a,b) <span class="ot">-&gt;</span> a <span class="op">==</span> b) pairs</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true"></a>                                num <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true"></a>                                den <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span><span class="ot"> as ::</span> <span class="dt">Double</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true"></a>                            <span class="kw">in</span> num<span class="op">/</span>den</span></code></pre></div>
 <p>If we plot <em>jackard2</em> we have an approximation based on the number of shingles:</p>
-<div class="figure">
-<img src="ApproxJackard.png" />
-
-</div>
+<p><img src="ApproxJackard.png" /></p>
 <h3 id="lost">Lost?</h3>
 <p>OK, let me summarize a little bit.</p>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li>You came here because you have the problem of comparing an object against N different objects and N is very large. </li>
 <li>The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.</li>
 <li>You want a cheap procedure for computing 2)</li>
@@ -318,7 +453,7 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <p>So the solution is to transform each object into a set of <em>c</em> different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
 <p>Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number <em>c</em>. But we still have to perform N comparisons against the N individuals in the population. Wouldn’t it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That’s possible with the use of <strong>bands</strong> but since this post is already very long, I’ll leave that for another post.</p>
 <h4 id="references">References</h4>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li><p><a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.8215">Minwise independent permutations</a> The paper with the math that demonstrates the link between the Jackard Coefficient and the probability.</p></li>
 <li><p><a href="http://infolab.stanford.edu/~ullman/mmds.html">Chapter 3</a> of the excellent book “Minning massive datasets”</p></li>
 </ol>
@@ -343,122 +478,112 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <p>I know that the whole exercise here can be easily done with the R package <a href="http://cran.r-project.org/web/packages/gbm/index.html">gbm</a> but I wanted to do the exercise using Python. Since learning several languages well enough is difficult and time consuming I would prefer to stick all my data analysis to Python instead doing it in R, even with R being superior on some cases. But having only one language for doing all your scripting, systems programming and prototyping PLUS your data analysis is a good reason for me. Your upfront effort of learning the language, setting up your tools and editors, etc. is done only once instead of twice.</p>
 <h2 id="data-preparation-and-model-fitting">Data Preparation and Model Fitting</h2>
 <p>The first thing to do is to load the data into a <a href="http://pandas.pydata.org/pandas-docs/stable">Pandas</a> dataframe</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> numpy <span class="im">as</span> np
-<span class="im">import</span> pandas <span class="im">as</span> pd
-
-columnNames <span class="op">=</span> [<span class="st">&#39;HouseVal&#39;</span>,<span class="st">&#39;MedInc&#39;</span>,<span class="st">&#39;HouseAge&#39;</span>,<span class="st">&#39;AveRooms&#39;</span>,
-               <span class="co">&#39;AveBedrms&#39;</span>,<span class="st">&#39;Population&#39;</span>,<span class="st">&#39;AveOccup&#39;</span>,<span class="st">&#39;Latitude&#39;</span>,<span class="st">&#39;Longitud&#39;</span>]
-
-df <span class="op">=</span> pd.read_csv(<span class="st">&#39;cadata.txt&#39;</span>,skiprows<span class="op">=</span><span class="dv">27</span>, sep<span class="op">=</span><span class="st">&#39;\s+&#39;</span>,names<span class="op">=</span>columnNames)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>columnNames <span class="op">=</span> [<span class="st">&#39;HouseVal&#39;</span>,<span class="st">&#39;MedInc&#39;</span>,<span class="st">&#39;HouseAge&#39;</span>,<span class="st">&#39;AveRooms&#39;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>               <span class="st">&#39;AveBedrms&#39;</span>,<span class="st">&#39;Population&#39;</span>,<span class="st">&#39;AveOccup&#39;</span>,<span class="st">&#39;Latitude&#39;</span>,<span class="st">&#39;Longitud&#39;</span>]</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>df <span class="op">=</span> pd.read_csv(<span class="st">&#39;cadata.txt&#39;</span>,skiprows<span class="op">=</span><span class="dv">27</span>, sep<span class="op">=</span><span class="st">&#39;\s+&#39;</span>,names<span class="op">=</span>columnNames)</span></code></pre></div>
 <p>Now we have to split the datasets into training and validation. The training data will be used to generate the trees that will constitute the final averaged model.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> random
-
-X <span class="op">=</span> df[df.columns <span class="op">-</span> [<span class="st">&#39;HouseVal&#39;</span>]]
-Y <span class="op">=</span> df[<span class="st">&#39;HouseVal&#39;</span>]
-rows <span class="op">=</span> random.sample(df.index, <span class="bu">int</span>(<span class="bu">len</span>(df)<span class="op">*</span>.<span class="dv">80</span>))
-x_train, y_train <span class="op">=</span> X.ix[rows],Y.ix[rows]
-x_test,y_test  <span class="op">=</span> X.drop(rows),Y.drop(rows)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">import</span> random</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>X <span class="op">=</span> df[df.columns <span class="op">-</span> [<span class="st">&#39;HouseVal&#39;</span>]]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>Y <span class="op">=</span> df[<span class="st">&#39;HouseVal&#39;</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>rows <span class="op">=</span> random.sample(df.index, <span class="bu">int</span>(<span class="bu">len</span>(df)<span class="op">*</span><span class="fl">.80</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>x_train, y_train <span class="op">=</span> X.ix[rows],Y.ix[rows]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>x_test,y_test  <span class="op">=</span> X.drop(rows),Y.drop(rows)</span></code></pre></div>
 <p>We then fit a Gradient Tree Boosting model to the data using the <a href="http://scikit-learn.org/stable/">scikit-learn</a> package. We will use 500 trees with each tree having a depth of 6 levels. In order to get results similar to those in the book we also use the <a href="http://en.wikipedia.org/wiki/Huber_loss_function">Huber loss function</a>.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error,r2_score
-<span class="im">from</span> sklearn.ensemble <span class="im">import</span> GradientBoostingRegressor
-params <span class="op">=</span> {<span class="st">&#39;n_estimators&#39;</span>: <span class="dv">500</span>, <span class="st">&#39;max_depth&#39;</span>: <span class="dv">6</span>,
-        <span class="co">&#39;learn_rate&#39;</span>: <span class="fl">0.1</span>, <span class="st">&#39;loss&#39;</span>: <span class="st">&#39;huber&#39;</span>,<span class="st">&#39;alpha&#39;</span>:<span class="fl">0.95</span>}
-clf <span class="op">=</span> GradientBoostingRegressor(<span class="op">**</span>params).fit(x_train, y_train)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error,r2_score</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> GradientBoostingRegressor</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>params <span class="op">=</span> {<span class="st">&#39;n_estimators&#39;</span>: <span class="dv">500</span>, <span class="st">&#39;max_depth&#39;</span>: <span class="dv">6</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>        <span class="st">&#39;learn_rate&#39;</span>: <span class="fl">0.1</span>, <span class="st">&#39;loss&#39;</span>: <span class="st">&#39;huber&#39;</span>,<span class="st">&#39;alpha&#39;</span>:<span class="fl">0.95</span>}</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>clf <span class="op">=</span> GradientBoostingRegressor(<span class="op">**</span>params).fit(x_train, y_train)</span></code></pre></div>
 <p>For me, the Mean Squared Error wasn’t much informative and used instead the R2 coefficient of determination. This measure is a number indicating how well a variable is able to predict the other. Values close to 0 means poor prediction and values close to 1 means perfect prediction. In the book, they claim a 0.84 against a 0.86 reported in the paper that created the dataset using a highly tuned algorithm. I’m getting a good 0.83 without much tunning of the parameters so it’s a good out of the box technique.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">mse <span class="op">=</span> mean_squared_error(y_test, clf.predict(x_test))
-r2 <span class="op">=</span> r2_score(y_test, clf.predict(x_test))
-
-<span class="bu">print</span>(<span class="st">&quot;MSE: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> mse)
-<span class="bu">print</span>(<span class="st">&quot;R2: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> r2)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>mse <span class="op">=</span> mean_squared_error(y_test, clf.predict(x_test))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>r2 <span class="op">=</span> r2_score(y_test, clf.predict(x_test))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="bu">print</span>(<span class="st">&quot;MSE: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> mse)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="bu">print</span>(<span class="st">&quot;R2: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> r2)</span></code></pre></div>
 <h2 id="data-analysis">Data Analysis</h2>
 <p>Let’s plot how does the training and testing error behave</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt
-
-<span class="co"># compute test set deviance</span>
-test_score <span class="op">=</span> np.zeros((params[<span class="st">&#39;n_estimators&#39;</span>],), dtype<span class="op">=</span>np.float64)
-
-<span class="cf">for</span> i, y_pred <span class="op">in</span> <span class="bu">enumerate</span>(clf.staged_decision_function(x_test)):
-    test_score[i] <span class="op">=</span> clf.loss_(y_test, y_pred)
-
-plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
-plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
-plt.title(<span class="st">&#39;Deviance&#39;</span>)
-plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, clf.train_score_, <span class="st">&#39;b-&#39;</span>,
-                label<span class="op">=</span><span class="st">&#39;Training Set Deviance&#39;</span>)
-plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, test_score, <span class="st">&#39;r-&#39;</span>,
-                label<span class="op">=</span><span class="st">&#39;Test Set Deviance&#39;</span>)
-plt.legend(loc<span class="op">=</span><span class="st">&#39;upper right&#39;</span>)
-plt.xlabel(<span class="st">&#39;Boosting Iterations&#39;</span>)
-plt.ylabel(<span class="st">&#39;Deviance&#39;</span>)</code></pre></div>
-<div class="figure">
-<img src="Errors.png" />
-
-</div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="co"># compute test set deviance</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>test_score <span class="op">=</span> np.zeros((params[<span class="st">&#39;n_estimators&#39;</span>],), dtype<span class="op">=</span>np.float64)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="cf">for</span> i, y_pred <span class="kw">in</span> <span class="bu">enumerate</span>(clf.staged_decision_function(x_test)):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    test_score[i] <span class="op">=</span> clf.loss_(y_test, y_pred)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>plt.title(<span class="st">&#39;Deviance&#39;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, clf.train_score_, <span class="st">&#39;b-&#39;</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>                label<span class="op">=</span><span class="st">&#39;Training Set Deviance&#39;</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>plt.plot(np.arange(params[<span class="st">&#39;n_estimators&#39;</span>]) <span class="op">+</span> <span class="dv">1</span>, test_score, <span class="st">&#39;r-&#39;</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>                label<span class="op">=</span><span class="st">&#39;Test Set Deviance&#39;</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>plt.legend(loc<span class="op">=</span><span class="st">&#39;upper right&#39;</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>plt.xlabel(<span class="st">&#39;Boosting Iterations&#39;</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>plt.ylabel(<span class="st">&#39;Deviance&#39;</span>)</span></code></pre></div>
+<p><img src="Errors.png" /></p>
 <p>As you can see in the previous graph, although the train error keeps going down as we add more trees to our model, the test error remains more or less constant and doesn’t incur in overfitting. This is mainly due to the shrinkage parameter and one of the good features of this algorithm.</p>
 <p>When doing data mining as important as finding a good model is being able to interpret it, because based on that analysis and interpretation preemptive actions can be performed. Although base trees are easily interpretable when you are adding several of those trees interpretation is more difficult. You usually rely on some measures of the predictive power of each feature. Let’s plot feature importance in predicting the House Value.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">feature_importance <span class="op">=</span> clf.feature_importances_
-<span class="co"># make importances relative to max importance</span>
-feature_importance <span class="op">=</span> <span class="fl">100.0</span> <span class="op">*</span> (feature_importance <span class="op">/</span> feature_importance.<span class="bu">max</span>())
-sorted_idx <span class="op">=</span> np.argsort(feature_importance)
-pos <span class="op">=</span> np.arange(sorted_idx.shape[<span class="dv">0</span>]) <span class="op">+</span> .<span class="dv">5</span>
-plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
-plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
-plt.barh(pos, feature_importance[sorted_idx], align<span class="op">=</span><span class="st">&#39;center&#39;</span>)
-plt.yticks(pos, X.columns[sorted_idx])
-plt.xlabel(<span class="st">&#39;Relative Importance&#39;</span>)
-plt.title(<span class="st">&#39;Variable Importance&#39;</span>)
-plt.show()</code></pre></div>
-<div class="figure">
-<img src="RelativeImportance.png" />
-
-</div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>feature_importance <span class="op">=</span> clf.feature_importances_</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="co"># make importances relative to max importance</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>feature_importance <span class="op">=</span> <span class="fl">100.0</span> <span class="op">*</span> (feature_importance <span class="op">/</span> feature_importance.<span class="bu">max</span>())</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>sorted_idx <span class="op">=</span> np.argsort(feature_importance)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>pos <span class="op">=</span> np.arange(sorted_idx.shape[<span class="dv">0</span>]) <span class="op">+</span> <span class="fl">.5</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>plt.barh(pos, feature_importance[sorted_idx], align<span class="op">=</span><span class="st">&#39;center&#39;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>plt.yticks(pos, X.columns[sorted_idx])</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>plt.xlabel(<span class="st">&#39;Relative Importance&#39;</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>plt.title(<span class="st">&#39;Variable Importance&#39;</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>plt.show()</span></code></pre></div>
+<p><img src="RelativeImportance.png" /></p>
 <p>Once variable importance has been identified we could try to investigate how those variables interact between them. For instance, we can plot the dependence of the target variable with another variable has been averaged over the values of the other variables not being taken into consideration. Some variables present a clear monotonic dependence with the target value, while others seem not very related to the target variable even when they ranked high in the previous plot. This could be signaling an interaction between variables that could be further studied.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.ensemble.partial_dependence <span class="im">import</span> plot_partial_dependence
-
-fig, axs <span class="op">=</span> plot_partial_dependence(clf, x_train,
-                                   features<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">6</span>],
-                                   feature_names<span class="op">=</span>x_train.columns,
-                                   n_cols<span class="op">=</span><span class="dv">2</span>)
-
-fig.show()</code></pre></div>
-<div class="figure">
-<img src="panel.png" alt="Partial Dependence" />
-<p class="caption">Partial Dependence</p>
-</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="im">from</span> sklearn.ensemble.partial_dependence <span class="im">import</span> plot_partial_dependence</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>fig, axs <span class="op">=</span> plot_partial_dependence(clf, x_train,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>                                   features<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">6</span>],</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>                                   feature_names<span class="op">=</span>x_train.columns,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>                                   n_cols<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>fig.show()</span></code></pre></div>
+<figure>
+<img src="panel.png" alt="" /><figcaption>Partial Dependence</figcaption>
+</figure>
 <p>The last step performed was to explore the capabilities of the Python libraries when plotting data in a map. Here we are plotting the predicted House Value in California using Latitude and Longitude as the axis for plotting this data in the map.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> mpl_toolkits.basemap <span class="im">import</span> Basemap
-predDf <span class="op">=</span> pd.DataFrame(x_test.copy())
-predDf[<span class="st">&#39;y_pred&#39;</span>] <span class="op">=</span> clf.predict(x_test)
-
-<span class="kw">def</span> california_map(ax<span class="op">=</span><span class="va">None</span>, lllat<span class="op">=</span><span class="fl">31.5</span>,urlat<span class="op">=</span><span class="fl">42.5</span>,
-                   lllon<span class="op">=-</span><span class="dv">124</span>,urlon<span class="op">=-</span><span class="dv">113</span>):
-    m <span class="op">=</span> Basemap(ax<span class="op">=</span>ax, projection<span class="op">=</span><span class="st">&#39;stere&#39;</span>,
-                lon_0<span class="op">=</span>(urlon <span class="op">+</span> lllon) <span class="op">/</span> <span class="dv">2</span>,
-                lat_0<span class="op">=</span>(urlat <span class="op">+</span> lllat) <span class="op">/</span> <span class="dv">2</span>,
-                llcrnrlat<span class="op">=</span>lllat, urcrnrlat<span class="op">=</span>urlat,
-                llcrnrlon<span class="op">=</span>lllon, urcrnrlon<span class="op">=</span>urlon,
-                resolution<span class="op">=</span><span class="st">&#39;f&#39;</span>)
-    m.drawstates()
-    m.drawcountries()
-    m.drawcoastlines(color<span class="op">=</span><span class="st">&#39;lightblue&#39;</span>)
-    <span class="cf">return</span> m
-
-plt.figure()
-m<span class="op">=</span> california_map()
-predDf <span class="op">=</span> predDf.sort(<span class="st">&#39;y_pred&#39;</span>) <span class="co"># Useful for plotting</span>
-x,y <span class="op">=</span> m(predDf[<span class="st">&#39;Longitud&#39;</span>],predDf[<span class="st">&#39;Latitude&#39;</span>])
-serieA <span class="op">=</span> (np.array(predDf[<span class="st">&#39;y_pred&#39;</span>]) <span class="op">-</span> predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())<span class="op">/</span>(predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">max</span>()<span class="op">-</span>predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())
-<span class="co"># z = plt.cm.jet(serieA)</span>
-z <span class="op">=</span> np.array(predDf[<span class="st">&#39;y_pred&#39;</span>])<span class="op">/</span><span class="dv">1000</span>
-m.scatter(x,y,c<span class="op">=</span>z,s<span class="op">=</span><span class="dv">60</span>,alpha<span class="op">=</span><span class="fl">0.5</span>,edgecolors<span class="op">=</span><span class="st">&#39;none&#39;</span>)
-c <span class="op">=</span> m.colorbar(location<span class="op">=</span><span class="st">&#39;right&#39;</span>)
-c.set_label(<span class="st">&quot;House Value (Thousands of $)&quot;</span>)
-m.plot()
-plt.show()</code></pre></div>
-<div class="figure">
-<img src="California.png" />
-
-</div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="im">from</span> mpl_toolkits.basemap <span class="im">import</span> Basemap</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>predDf <span class="op">=</span> pd.DataFrame(x_test.copy())</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>predDf[<span class="st">&#39;y_pred&#39;</span>] <span class="op">=</span> clf.predict(x_test)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="kw">def</span> california_map(ax<span class="op">=</span><span class="va">None</span>, lllat<span class="op">=</span><span class="fl">31.5</span>,urlat<span class="op">=</span><span class="fl">42.5</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>                   lllon<span class="op">=-</span><span class="dv">124</span>,urlon<span class="op">=-</span><span class="dv">113</span>):</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    m <span class="op">=</span> Basemap(ax<span class="op">=</span>ax, projection<span class="op">=</span><span class="st">&#39;stere&#39;</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>                lon_0<span class="op">=</span>(urlon <span class="op">+</span> lllon) <span class="op">/</span> <span class="dv">2</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>                lat_0<span class="op">=</span>(urlat <span class="op">+</span> lllat) <span class="op">/</span> <span class="dv">2</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>                llcrnrlat<span class="op">=</span>lllat, urcrnrlat<span class="op">=</span>urlat,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>                llcrnrlon<span class="op">=</span>lllon, urcrnrlon<span class="op">=</span>urlon,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>                resolution<span class="op">=</span><span class="st">&#39;f&#39;</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    m.drawstates()</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>    m.drawcountries()</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>    m.drawcoastlines(color<span class="op">=</span><span class="st">&#39;lightblue&#39;</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>    <span class="cf">return</span> m</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>plt.figure()</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>m<span class="op">=</span> california_map()</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>predDf <span class="op">=</span> predDf.sort(<span class="st">&#39;y_pred&#39;</span>) <span class="co"># Useful for plotting</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>x,y <span class="op">=</span> m(predDf[<span class="st">&#39;Longitud&#39;</span>],predDf[<span class="st">&#39;Latitude&#39;</span>])</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>serieA <span class="op">=</span> (np.array(predDf[<span class="st">&#39;y_pred&#39;</span>]) <span class="op">-</span> predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())<span class="op">/</span>(predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">max</span>()<span class="op">-</span>predDf[<span class="st">&#39;y_pred&#39;</span>].<span class="bu">min</span>())</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a><span class="co"># z = plt.cm.jet(serieA)</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>z <span class="op">=</span> np.array(predDf[<span class="st">&#39;y_pred&#39;</span>])<span class="op">/</span><span class="dv">1000</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>m.scatter(x,y,c<span class="op">=</span>z,s<span class="op">=</span><span class="dv">60</span>,alpha<span class="op">=</span><span class="fl">0.5</span>,edgecolors<span class="op">=</span><span class="st">&#39;none&#39;</span>)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a>c <span class="op">=</span> m.colorbar(location<span class="op">=</span><span class="st">&#39;right&#39;</span>)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a>c.set_label(<span class="st">&quot;House Value (Thousands of $)&quot;</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>m.plot()</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>plt.show()</span></code></pre></div>
+<p><img src="California.png" /></p>
 <h2 id="addendum">Addendum</h2>
 <p>This blog post was written using <a href="http://pylit.berlios.de">Pylit</a> as the tool for doing <a href="http://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>. The code can be seen <a href="https://gist.github.com/4018084">here</a>. I think that literate programming is way superior to other software methodologies like TDD when coding algorithms for data analysis. The main problem I find right now is the lack of proper tooling for really taking advantage of literate programming, but this is a technique that I’m definitely going to research deeper.</p>
 </div>
@@ -478,77 +603,74 @@ plt.show()</code></pre></div>
     Posted on May 23, 2012
     
   </p>
-  <div class="figure">
-<img src="BoostLogo.png" />
-
-</div>
+  <p><img src="BoostLogo.png" /></p>
 <p>I needed to convert user ids spread across a lot of files into a fixed range [0..N] where N was the total number of Ids in the dataset. First I though that since those files came from a Hadoop cluster I should write a MR job to do the task. But since recoding ids needs a “central authority” giving unique ids without collision, MapReduce wasn’t an option because MR thinks about each record as independent of the rest of records, so coordinating the assignment of ids is both difficult and unnatural in MapReduce. The naïve approach is to create a counter, loop through all the ids and whenever an id is not in the dictionary, use the counter as the new translation. See the pseudocode</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="bu">int</span> counter <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>
-<span class="cf">for</span> <span class="bu">id</span> <span class="op">in</span> ids:
-    <span class="cf">if</span> <span class="bu">id</span> <span class="op">not</span> <span class="op">in</span> <span class="bu">dict</span>:
-        <span class="bu">dict</span>[<span class="bu">id</span>] <span class="op">=</span> counter
-        counter<span class="op">++</span>
-    <span class="bu">print</span> <span class="bu">dict</span>[i]</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="bu">int</span> counter <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="cf">for</span> <span class="bu">id</span> <span class="kw">in</span> ids:</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    <span class="cf">if</span> <span class="bu">id</span> <span class="kw">not</span> <span class="kw">in</span> <span class="bu">dict</span>:</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>        <span class="bu">dict</span>[<span class="bu">id</span>] <span class="op">=</span> counter</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>        counter<span class="op">++</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    <span class="bu">print</span> <span class="bu">dict</span>[i]</span></code></pre></div>
 <p>But then you are wasting precious cores that could help you. My machine has eight cores, so for a task that runs in aprox 60 minutes, so after investing time in going beyond the naïve approach, I’m able to lower it to 10 minutes. That means that I can run tests 6 times faster, it will pay off.</p>
 <h3 id="lookup-table">Lookup table</h3>
 <p>So the first thing to do is to create a thread safe Hash Map. Most of the time the access will be for reading a value and less frequently for updating the data structure (in my problem I perform 250 reads for each write) so this scenario is ideal for a <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers-writer lock</a>. I use the Boost Thread library with its boost::shared_mutex for getting the multiple access functionality. The class is something like this</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">using</span> <span class="kw">namespace</span> boost;
-<span class="kw">class</span> LookupTable {
-    <span class="kw">private</span>:
-        <span class="kw">typedef</span> std::unordered_map&lt;<span class="dt">int</span>,<span class="dt">unsigned</span> <span class="dt">int</span>&gt; HashMap;
-        HashMap dict;
-        <span class="dt">unsigned</span> <span class="dt">int</span> counter;
-        shared_mutex m_mutex; 
-    <span class="kw">public</span>:
-        LookupTable(){};
-        <span class="dt">unsigned</span> <span class="dt">int</span> translate(<span class="dt">int</span> number){
-            boost::shared_lock&lt;boost::shared_mutex&gt; lck(m_mutex);
-            <span class="dt">unsigned</span> <span class="dt">int</span> result;
-            HashMap::iterator elem = dict.find(key);
-            <span class="kw">if</span>( elem == dict.end()){
-               lck.unlock();
-               boost::upgrade_lock&lt;boost::shared_mutex&gt; uLck(m_mutex);
-               boost::upgrade_to_unique_lock&lt;boost::shared_mutex&gt; uuLck(uLck);
-               dict[key] = counter;
-               result = counter;
-               counter++;
-            } <span class="kw">else</span> {
-               result = elem-&gt;second;
-            }
-            <span class="kw">return</span> result;
-        }
-};</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">using</span> <span class="kw">namespace</span> boost;</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="kw">class</span> LookupTable {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    <span class="kw">private</span>:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>        <span class="kw">typedef</span> <span class="bu">std::</span>unordered_map&lt;<span class="dt">int</span>,<span class="dt">unsigned</span> <span class="dt">int</span>&gt; HashMap;</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>        HashMap dict;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>        <span class="dt">unsigned</span> <span class="dt">int</span> counter;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>        shared_mutex <span class="va">m_mutex</span>; </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="kw">public</span>:</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>        LookupTable(){};</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>        <span class="dt">unsigned</span> <span class="dt">int</span> translate(<span class="dt">int</span> number){</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>            <span class="ex">boost::</span>shared_lock&lt;<span class="ex">boost::</span>shared_mutex&gt; lck(<span class="va">m_mutex</span>);</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>            <span class="dt">unsigned</span> <span class="dt">int</span> result;</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>            HashMap::iterator elem = dict.find(key);</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>            <span class="cf">if</span>( elem == dict.end()){</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>               lck.unlock();</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>               <span class="ex">boost::</span>upgrade_lock&lt;<span class="ex">boost::</span>shared_mutex&gt; uLck(<span class="va">m_mutex</span>);</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>               <span class="ex">boost::</span>upgrade_to_unique_lock&lt;<span class="ex">boost::</span>shared_mutex&gt; uuLck(uLck);</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>               dict[key] = counter;</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>               result = counter;</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>               counter++;</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>            } <span class="cf">else</span> {</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>               result = elem-&gt;second;</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>            }</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>            <span class="cf">return</span> result;</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a>        }</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>};</span></code></pre></div>
 <h3 id="thread-pool">Thread pool</h3>
 <p>Once we have the thread safe data structure in place, we want to create a thread pool were we can send tasks. The thread pool will be responsible to assign each task to the next free thread. The reason for having a thread pool instead of spawning as many threads as tasks is two fold, first, the amount of work I can do is bounded by the speed at which I’m able to read from disk, so throwing more threads doesn’t seem to help here. Second, since all the threads must query the lookup table, if there are lots of them the synchronization (mutex locking and unlocking) could become heavier than the work per thread becoming a bottleneck.</p>
 <p>Boost provides a nice thread pool by using the Boost::Asio library. I came to this pattern of usage by reading <a href="http://mostlycoding.blogspot.com.es/2009/05/asio-library-has-been-immensely-helpful.html">this</a> and <a href="http://think-async.com/Asio/Recipes">this</a> but it happens that they are wrong in a subtle detail. As they are written, they only run one task per thread and then the io_service is stopped. After scratching my head for a couple of hours I reread the official documentation and the solution is explained <a href="http://www.boost.org/doc/libs/1_49_0/doc/html/boost_asio/reference/io_service.html">at them botom of the page</a>. So the key issue is to destroy explicitly the work variable that we created for the io_service to not end too early. To accomplish that just embed the work in a smart pointer std::auto_ptr and reset it when necessary, the reset will call the work destructor.</p>
 <p>So the main program would be something like this</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Thread pool</span>
-asio::io_service io_service;
-boost::thread_group threads;
-auto_ptr&lt;asio::io_service::work&gt; work(<span class="kw">new</span> asio::io_service::work(io_service)); 
-
-<span class="co">// Spawn enough worker threads</span>
-<span class="dt">int</span> cores_number = boost::thread::hardware_concurrency(); 
-<span class="kw">for</span> (std::size_t i = <span class="dv">0</span>; i &lt; cores_number; ++i){
-    threads.create_thread(boost::bind(&amp;asio::io_service::run, &amp;io_service));
-}
-<span class="co">// Post the tasks to the io_service</span>
-<span class="kw">for</span>(vector&lt;string&gt;::iterator it=filenames.begin();it!=filenames.end();it++){
-   io_service.dispatch(std::move(translator(*it,dict)));
-}
-work.reset();</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">// Thread pool</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>asio::io_service io_service;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="ex">boost::</span>thread_group threads;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>auto_ptr&lt;asio::io_service::work&gt; work(<span class="kw">new</span> asio::io_service::work(io_service)); </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="co">// Spawn enough worker threads</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a><span class="dt">int</span> cores_number = <span class="ex">boost::</span>thread<span class="ex">::</span>hardware_concurrency(); </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="cf">for</span> (<span class="bu">std::</span>size_t i = <span class="dv">0</span>; i &lt; cores_number; ++i){</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    threads.create_thread(<span class="ex">boost::</span>bind(&amp;asio::io_service::run, &amp;io_service));</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>}</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a><span class="co">// Post the tasks to the io_service</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a><span class="cf">for</span>(vector&lt;string&gt;::iterator it=filenames.begin();it!=filenames.end();it++){</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>   io_service.dispatch(<span class="bu">std::</span>move(translator(*it,dict)));</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a>}</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a>work.reset();</span></code></pre></div>
 <p>and the code for the worker (sketched)</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> translator {
-    translator(string filename, LookupTable&amp; dict)
-        : m_filename(filename),m_dict(dict)
-    {
-    }
-    <span class="dt">void</span> <span class="kw">operator</span>()(){
-        <span class="co">// DO YOUR WORKER ACTIVITY HERE</span>
-        ...
-        <span class="kw">return</span>;
-    }
-}</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">struct</span> translator {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    translator(string filename, LookupTable&amp; dict)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>        : <span class="va">m_filename</span>(filename),<span class="va">m_dict</span>(dict)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    }</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    <span class="dt">void</span> <span class="kw">operator</span>()(){</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>        <span class="co">// DO YOUR WORKER ACTIVITY HERE</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>        ...</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>        <span class="cf">return</span>;</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    }</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>}</span></code></pre></div>
 </div>
 ]]></description>
     <pubDate>Wed, 23 May 2012 17:30:07 UT</pubDate>
@@ -569,28 +691,28 @@ work.reset();</code></pre></div>
   <p>Lately, I’ve been writing some <a href="http://research.yahoo.com/files/ieeecomputer.pdf">matrix factorization</a> code for a video recommender system. I’m a big fan of Test Driven Development but it is a technique that is difficult for me to apply to the numerical or algorithmic domain. In order to make sure that the code I write is correct what I’m doing is the Oracle Test Pattern (I’m sure there is a correct name for this but I’m not able to find it right now). The idea is to have a reference implementation that solves the exact problem you are trying to solve. In my case, that reference implementation does not exists but I’m writing a straightforward unoptimized version of the script in Python using the Numpy libraries. That will be my ground truth when comparing results with the highly optimized parallel Scala version of the algorithm.</p>
 <h3 id="the-problem">The problem</h3>
 <p>So the problem is that I’m working interactively coding the algorithm in an iPython session and I’m getting results of this kind</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">In [<span class="dv">4</span>]: x
-Out[<span class="dv">4</span>]:
-matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span class="fl">0.35836827</span>, <span class="op">-</span><span class="fl">2.06492572</span>,  <span class="fl">1.49773613</span>, <span class="op">-</span><span class="fl">1.01988835</span>,
-         <span class="op">-</span><span class="fl">0.20590096</span>, <span class="op">-</span><span class="fl">0.19658741</span>],
-        [ <span class="fl">0.43055155</span>,  <span class="fl">1.07532444</span>,  <span class="fl">0.89299596</span>, <span class="op">-</span><span class="fl">1.070371</span>  , <span class="op">-</span><span class="fl">0.24015718</span>,
-          <span class="fl">0.04521229</span>, <span class="op">-</span><span class="fl">1.39209522</span>],
-        [<span class="op">-</span><span class="fl">0.4482701</span> ,  <span class="fl">0.15201451</span>, <span class="op">-</span><span class="fl">1.42824771</span>,  <span class="fl">1.13859559</span>,  <span class="fl">0.66432642</span>,
-          <span class="fl">0.51184435</span>,  <span class="fl">0.52637519</span>],
-        [<span class="op">-</span><span class="fl">0.26518471</span>, <span class="op">-</span><span class="fl">1.14331753</span>, <span class="op">-</span><span class="fl">1.15492029</span>, <span class="op">-</span><span class="fl">0.27501194</span>,  <span class="fl">1.73750282</span>,
-         <span class="op">-</span><span class="fl">1.4118682</span> ,  <span class="fl">0.14701005</span>],
-        [<span class="op">-</span><span class="fl">1.6577536</span> , <span class="op">-</span><span class="fl">0.0781593</span> , <span class="op">-</span><span class="fl">0.01558478</span>,  <span class="fl">0.67277257</span>, <span class="op">-</span><span class="fl">0.07249647</span>,
-          <span class="fl">0.70946581</span>, <span class="op">-</span><span class="fl">0.82349608</span>]])</code></pre></div>
-<p>and I would like to just copy and paste this string and use it as the expected value in my Scala tests. That would involve to remove “matrix”, all the “[&quot; and “]”, substitute them for their Array() equivalents and put an <strong>F</strong> at the end of each number denoting that it is a Float. Too much work.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>In [<span class="dv">4</span>]: x</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>Out[<span class="dv">4</span>]:</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span class="fl">0.35836827</span>, <span class="op">-</span><span class="fl">2.06492572</span>,  <span class="fl">1.49773613</span>, <span class="op">-</span><span class="fl">1.01988835</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>         <span class="op">-</span><span class="fl">0.20590096</span>, <span class="op">-</span><span class="fl">0.19658741</span>],</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>        [ <span class="fl">0.43055155</span>,  <span class="fl">1.07532444</span>,  <span class="fl">0.89299596</span>, <span class="op">-</span><span class="fl">1.070371</span>  , <span class="op">-</span><span class="fl">0.24015718</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>          <span class="fl">0.04521229</span>, <span class="op">-</span><span class="fl">1.39209522</span>],</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>        [<span class="op">-</span><span class="fl">0.4482701</span> ,  <span class="fl">0.15201451</span>, <span class="op">-</span><span class="fl">1.42824771</span>,  <span class="fl">1.13859559</span>,  <span class="fl">0.66432642</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>          <span class="fl">0.51184435</span>,  <span class="fl">0.52637519</span>],</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>        [<span class="op">-</span><span class="fl">0.26518471</span>, <span class="op">-</span><span class="fl">1.14331753</span>, <span class="op">-</span><span class="fl">1.15492029</span>, <span class="op">-</span><span class="fl">0.27501194</span>,  <span class="fl">1.73750282</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>         <span class="op">-</span><span class="fl">1.4118682</span> ,  <span class="fl">0.14701005</span>],</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>        [<span class="op">-</span><span class="fl">1.6577536</span> , <span class="op">-</span><span class="fl">0.0781593</span> , <span class="op">-</span><span class="fl">0.01558478</span>,  <span class="fl">0.67277257</span>, <span class="op">-</span><span class="fl">0.07249647</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>          <span class="fl">0.70946581</span>, <span class="op">-</span><span class="fl">0.82349608</span>]])</span></code></pre></div>
+<p>and I would like to just copy and paste this string and use it as the expected value in my Scala tests. That would involve to remove “matrix”, all the “[" and "]”, substitute them for their Array() equivalents and put an <strong>F</strong> at the end of each number denoting that it is a Float. Too much work.</p>
 <h3 id="the-solution">The solution</h3>
 <p>If there is an area where functional languages shine is in creating DSLs. More specifically creating an <a href="http://martinfowler.com/bliki/InternalDslStyle.html">internal DSL</a> that looks more like an <a href="http://martinfowler.com/bliki/DomainSpecificLanguage.html">external DSL</a>. In Scala you can use the <a href="http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html">Parser Combinator libraries</a> that are part of the Scala’s core libraries. Such parser will be something like</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">class</span> PyMatrixParser <span class="kw">extends</span> JavaTokenParsers {
-  <span class="kw">def</span> matrix:Parser[Array[Array[Float]]] = <span class="st">&quot;matrix([&quot;</span> ~&gt; <span class="fu">repsep</span>(row,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;])&quot;</span> ^^ (_.<span class="fu">toArray</span>)
-  <span class="kw">def</span> row:Parser[Array[Float]] = <span class="st">&quot;[&quot;</span>~&gt; <span class="fu">repsep</span>(floatingPointNumber,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;]&quot;</span> ^^ (_.<span class="fu">map</span>(_.<span class="fu">toFloat</span>).<span class="fu">toArray</span>)
-}</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">class</span> PyMatrixParser <span class="kw">extends</span> JavaTokenParsers {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  <span class="kw">def</span> matrix:Parser[Array[Array[Float]]] = <span class="st">&quot;matrix([&quot;</span> ~&gt; <span class="fu">repsep</span>(row,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;])&quot;</span> ^^ (_.<span class="fu">toArray</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">def</span> row:Parser[Array[Float]] = <span class="st">&quot;[&quot;</span>~&gt; <span class="fu">repsep</span>(floatingPointNumber,<span class="st">&quot;,&quot;</span>) &lt;~ <span class="st">&quot;]&quot;</span> ^^ (_.<span class="fu">map</span>(_.<span class="fu">toFloat</span>).<span class="fu">toArray</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>}</span></code></pre></div>
 <p>using this parser is then just a matter of</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> parser = <span class="kw">new</span> PyMatrixParser
-<span class="kw">val</span> scalaMatrix = parser.<span class="fu">parseAll</span>(parser.<span class="fu">matrix</span>, theStringMatrix).<span class="fu">get</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">val</span> parser = <span class="kw">new</span> PyMatrixParser</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="kw">val</span> scalaMatrix = parser.<span class="fu">parseAll</span>(parser.<span class="fu">matrix</span>, theStringMatrix).<span class="fu">get</span></span></code></pre></div>
 <p>quite good result for just 2 lines of code defining the parser.</p>
 <p>This is the quick overview for those not familiar with Scala’s syntax</p>
 <ul>
@@ -619,90 +741,90 @@ matrix([[ <span class="fl">0.03893565</span>, <span class="op">-</span><span cla
     
   </p>
   <p>One common situation when analyzing big chunks of data is to parse big CSV files with a record structure on each line. That is, all lines conform to a fixed schema where each line represents a record and each record has several columns of different types. Your objective is to parse and fill a data structure like this</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> foo {
-    <span class="dt">int</span> a;
-    std::string b;
-    <span class="dt">double</span> c;
-};</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">struct</span> foo {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    <span class="dt">int</span> a;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    <span class="bu">std::</span>string b;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    <span class="dt">double</span> c;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>};</span></code></pre></div>
 <p>for each record. All the information needed for such parsing is in this data structure so I wondered whether I could write a program when you pass that type information and the parsing is done automatically for you. This is my first attempt at getting a flexible and fast CSV parser in C++. It is hosted in <a href="https://github.com/tonicebrian/csv_iterator">Github</a>.</p>
 <h2 id="design">Design</h2>
 <p>When parsing CSV files the common usage pattern is to iterate through each line and perform a given action on each record. No need for a big CSV container or something similar, so the best approach is to write a class that acts as an iterator. When derreferencing the iterator it will return the provided data structure filled with parsed data from the current line.</p>
 <p>An iterator is associated to a container but in this case, it will be constructed accepting an <em>std::istream</em> representing the CSV file. By accepting this istream we will be able to parse strings using the <em>std::stringstream</em> class, regular files, or compressed files using the <a href="http://www.boost.org/doc/libs/1_48_0/libs/iostreams/doc/index.html">Boost Iostream library</a>.</p>
 <p>The iterator must have all the common operators for it to interoperate with the STL algorithms seamlessly. The empty constructor will mark the iterator’s end-of-range position that coincides with the end of file. A typical use case will be to have some code like this:</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;fstream&gt;</span>
-<span class="ot">#include &lt;boost/tuple/tuple.hpp&gt;</span>
-<span class="ot">#include &lt;csv_iterator.hpp&gt;</span>
-
-<span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
-<span class="kw">typedef</span> tuple&lt;<span class="dt">int</span>,std::string,<span class="dt">double</span>&gt; record;
-
-<span class="dt">void</span> myFunc(<span class="dt">const</span> record&amp; value){
-    <span class="co">// Your code here</span>
-}
-
-<span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">const</span> <span class="dt">char</span> *argv[])
-{
-    <span class="co">// Example of csv_iterator usage</span>
-    std::ifstream in(<span class="st">&quot;myCsvFile.csv&quot;</span>);
-    csv::iterator&lt;record&gt; it(in);
-
-    <span class="co">// Use the iterator in your algorithms.</span>
-    std::for_each(it, csv::iterator&lt;record&gt;(), myFunc);
-
-    <span class="kw">return</span> <span class="dv">0</span>;
-}</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&lt;fstream&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&lt;boost/tuple/tuple.hpp&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&lt;csv_iterator.hpp&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="kw">using</span> <span class="kw">namespace</span> <span class="ex">boost::</span>tuples;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="kw">typedef</span> tuple&lt;<span class="dt">int</span>,<span class="bu">std::</span>string,<span class="dt">double</span>&gt; record;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="dt">void</span> myFunc(<span class="at">const</span> record&amp; value){</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    <span class="co">// Your code here</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>}</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="at">const</span> <span class="dt">char</span> *argv[])</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>{</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    <span class="co">// Example of csv_iterator usage</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    <span class="bu">std::</span>ifstream in(<span class="st">&quot;myCsvFile.csv&quot;</span>);</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    csv::iterator&lt;record&gt; it(in);</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    <span class="co">// Use the iterator in your algorithms.</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    <span class="bu">std::</span>for_each(it, csv::iterator&lt;record&gt;(), myFunc);</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>    <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>}</span></code></pre></div>
 <p>for parsing CSV files like this:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">1</span>,hola,3.14
-<span class="kw">2</span>,adios,2.71</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ex">1</span>,hola,3.14</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ex">2</span>,adios,2.71</span></code></pre></div>
 <h2 id="implementation">Implementation</h2>
 <p>For obtaining the values on each line, the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/libs/tokenizer/index.html">Boost Tokenizer library</a>. From a string you create a tokenizer that splits the input string by the character delimiter that by default is the comma. It also takes care of escaping characters. Accessing the different tokens is granted by the tokenizer by providing a token iterator.</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">using</span> <span class="kw">namespace</span> boost;
-<span class="kw">typedef</span> tokenizer&lt;escaped_list_separator&lt;<span class="dt">char</span>&gt; &gt; Tokens;
-Tokens tokens(currentLine);
-<span class="co">// Tokens can be accessed using tokens.begin() and tokens.end() iterators</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">using</span> <span class="kw">namespace</span> boost;</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="kw">typedef</span> tokenizer&lt;escaped_list_separator&lt;<span class="dt">char</span>&gt; &gt; Tokens;</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>Tokens tokens(currentLine);</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">// Tokens can be accessed using tokens.begin() and tokens.end() iterators</span></span></code></pre></div>
 <p>Once we have the strings representing different values we have to parse and convert them into a type. Bad data format exceptions happen here and can be spotted earlier. For parsing using an unified approach the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/doc/html/boost_lexical_cast.html">Boost Lexical Cast Library</a>. This library provides a uniform and portable interface for doing text conversions</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">int</span> myInt = boost::lexical_cast&lt;<span class="dt">int</span>&gt;(<span class="st">&quot;5&quot;</span>);
-<span class="dt">double</span> myDouble = boost::lexical_cast&lt;<span class="dt">double</span>&gt;(<span class="st">&quot;3.14&quot;</span>);</code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="dt">int</span> myInt = <span class="ex">boost::</span>lexical_cast&lt;<span class="dt">int</span>&gt;(<span class="st">&quot;5&quot;</span>);</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="dt">double</span> myDouble = <span class="ex">boost::</span>lexical_cast&lt;<span class="dt">double</span>&gt;(<span class="st">&quot;3.14&quot;</span>);</span></code></pre></div>
 <p>For the record data structure the library uses the <a href="http://www.boost.org/doc/libs/1_48_0/libs/tuple/doc/tuple_users_guide.html">Boost Tuple Library</a> that provides a Plain “old” Data Structure for storing the record fields. Moreover this class provides some template infrastructure that helps in the metaprogramming trick that follows.</p>
 <h3 id="template-metaprogamming">Template metaprogamming</h3>
 <p>For our library the number of columns and the datatype is implicit in the record type. Our algorithm for parsing is basic, depending on the field type, parse the Nth string accordingly, and assign the result to the Nth field. Repeat for all the record fields. This <a href="http://en.wikipedia.org/wiki/Polymorphism_(computer_science)#Parametric_polymorphism">parametric polymorphism</a> must be combined with the dynamic access of the string tokenization. The former can be obtained in C++ using <a href="http://en.wikipedia.org/wiki/Template_metaprogramming">Template metaprogramming</a>. The code that makes the trick is this one</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span>&lt;<span class="kw">class</span> Tuple, <span class="dt">int</span> N &gt;
-    <span class="kw">struct</span> helper {
-        <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){
-            <span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
-            <span class="kw">typedef</span> <span class="kw">typename</span> element&lt;length&lt;Tuple&gt;::value-N<span class="dv">-1</span>,Tuple&gt;::type value_type;
-            checkIteratorRange(it,end);
-            get&lt;length&lt;Tuple&gt;::value-N<span class="dv">-1</span>&gt;(tuple) = boost::lexical_cast&lt;value_type&gt;(it-&gt;c_str());
-            ++it;
-            helper&lt;Tuple,N<span class="dv">-1</span>&gt;::fill(tuple,it,end);
-        }
-    };
-
-<span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;
-    <span class="kw">struct</span> helper&lt;Tuple, <span class="dv">0</span>&gt; {
-        <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){
-            <span class="kw">using</span> <span class="kw">namespace</span> boost::tuples;
-            <span class="kw">typedef</span> <span class="kw">typename</span> boost::tuples::element&lt;length&lt;Tuple&gt;::value<span class="dv">-1</span>,Tuple&gt;::type value_type;
-            checkIteratorRange(it,end);
-            boost::tuples::get&lt;length&lt;Tuple&gt;::value<span class="dv">-1</span>&gt;(tuple) = boost::lexical_cast&lt;value_type&gt;(it-&gt;c_str());
-            ++it;
-        };
-    };
-
-<span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;
-    <span class="kw">struct</span> filler {
-       <span class="dt">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp;&amp; it,strIt&amp;&amp; end){
-            checkIteratorRange(it,end);
-            helper&lt;Tuple, boost::tuples::length&lt;Tuple&gt;::value<span class="dv">-1</span>&gt;::fill(tuple,it,end);
-        }
-    };</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">template</span>&lt;<span class="kw">class</span> Tuple, <span class="dt">int</span> N &gt;</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    <span class="kw">struct</span> helper {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>        <span class="at">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>            <span class="kw">using</span> <span class="kw">namespace</span> <span class="ex">boost::</span>tuples;</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>            <span class="kw">typedef</span> <span class="kw">typename</span> element&lt;length&lt;Tuple&gt;::value-N-<span class="dv">1</span>,Tuple&gt;::type <span class="dt">value_type</span>;</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>            checkIteratorRange(it,end);</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>            get&lt;length&lt;Tuple&gt;::value-N-<span class="dv">1</span>&gt;(tuple) = <span class="ex">boost::</span>lexical_cast&lt;<span class="dt">value_type</span>&gt;(it-&gt;c_str());</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>            ++it;</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>            helper&lt;Tuple,N-<span class="dv">1</span>&gt;::fill(tuple,it,end);</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>        }</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>    };</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    <span class="kw">struct</span> helper&lt;Tuple, <span class="dv">0</span>&gt; {</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a>        <span class="at">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp; it, strIt&amp; end){</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a>            <span class="kw">using</span> <span class="kw">namespace</span> <span class="ex">boost::</span>tuples;</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>            <span class="kw">typedef</span> <span class="kw">typename</span> <span class="ex">boost::</span>tuples<span class="ex">::</span>element&lt;length&lt;Tuple&gt;::value-<span class="dv">1</span>,Tuple&gt;::type <span class="dt">value_type</span>;</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>            checkIteratorRange(it,end);</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>            <span class="ex">boost::</span>tuples<span class="ex">::</span>get&lt;length&lt;Tuple&gt;::value-<span class="dv">1</span>&gt;(tuple) = <span class="ex">boost::</span>lexical_cast&lt;<span class="dt">value_type</span>&gt;(it-&gt;c_str());</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a>            ++it;</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a>        };</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a>    };</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true"></a><span class="kw">template</span>&lt;<span class="kw">class</span> Tuple&gt;</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true"></a>    <span class="kw">struct</span> filler {</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true"></a>       <span class="at">static</span> <span class="dt">void</span> fill(Tuple&amp; tuple, strIt&amp;&amp; it,strIt&amp;&amp; end){</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true"></a>            checkIteratorRange(it,end);</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true"></a>            helper&lt;Tuple, <span class="ex">boost::</span>tuples<span class="ex">::</span>length&lt;Tuple&gt;::value-<span class="dv">1</span>&gt;::fill(tuple,it,end);</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true"></a>        }</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true"></a>    };</span></code></pre></div>
 <p>Yes, C++ syntax sucks!! But basically what we are doing here is a common pattern of functional programming, <a href="http://en.wikipedia.org/wiki/Tail_call">tail recursion</a>. We define structures that contain static functions. The <strong>filler</strong> structure just initializes the recursive call by instantiating an instance of the <strong>helper</strong> paremeterized structure setting the length recursion to the number of fields in the tuple. This structure has to be specialized for the 0 value in order for the recursion to stop. All this functionality is done behind the curtain by the compiler (compilation time increases when using template metaprogramming) but the generated code will be something very similar to this pseudocode:</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">boost::tuples::get&lt;<span class="dv">0</span>&gt;(tuple) = (casting_here)*it; 
-++it;
-boost::tuples::get&lt;<span class="dv">1</span>&gt;(tuple) = (casting_here)*it; 
-++it;
-boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it; 
-++it;</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ex">boost::</span>tuples<span class="ex">::</span>get&lt;<span class="dv">0</span>&gt;(tuple) = (casting_here)*it; </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>++it;</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="ex">boost::</span>tuples<span class="ex">::</span>get&lt;<span class="dv">1</span>&gt;(tuple) = (casting_here)*it; </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>++it;</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="ex">boost::</span>tuples<span class="ex">::</span>get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it; </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>++it;</span></code></pre></div>
 <p>almost identical to the code we would have written by hand. The compiler is the one who knows how many fields our structure has at compile time and generates as many efficient instructions as needed.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>I wanted to stretch my programming muscles by coding a generic, flexible and fast CSV parser in C++ using template metaprogramming. The generic and flexible parts of the task have been accomplished but not the performance objectives. Although the library is fast enough for most tasks, it isn’t in a scenario of Big Data parsing big files. The tokenizer iterator is incurring a performance penalty each time I try to derreference it, since it creates and allocates memory for a <em>std::string</em> each time we invoke _*it_. This memory allocation is a performance drain doing useless work because we need this information only for parsing and getting a value, but the string is discarded thereafter. It would be better to perform an in-place parsing using the string allocated when reading the lines of the file. To that end it will be enlightening in the future to try this same exercise with more performant string libraries like the <a href="http://www.partow.net/programming/strtk/index.html">C++ String Toolkit</a> and see the differences in performance.</p>
@@ -748,282 +870,70 @@ boost::tuples::get&lt;<span class="dv">2</span>&gt;(tuple) = (casting_here)*it;
   </p>
   <p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
 <p>First install the required dependencies. In my Ubuntu 11.04, is something like:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</span></code></pre></div>
 <p>For Ubuntu 11.04 you have to install JAGS from sources, but it seems that this version will be packaged in the next Ubuntu release. Download the software from <a href="http://sourceforge.net/projects/mcmc-jags/">here</a> and install.</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">tar</span> xvfz JAGS-3.1.0.tar.gz
-<span class="kw">cd</span> JAGS-3.1.0
-<span class="kw">./configure</span>
-<span class="kw">make</span>
-<span class="kw">sudo</span> make install</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">tar</span> xvfz JAGS-3.1.0.tar.gz</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="bu">cd</span> JAGS-3.1.0</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="ex">./configure</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="fu">make</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="fu">sudo</span> make install</span></code></pre></div>
 <p>Now fire R and install the interface package rjags</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">R</span>
-<span class="kw">...</span>
-<span class="kw">&gt;</span> <span class="kw">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">R</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ex">...</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</span></code></pre></div>
 <p>Now let’s do something interesting (although pretty simple). Let’s assume we have a stream of 1s and 0s with an unknown proportion of each one. From R we can generate such distribution with the command</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">points</span> <span class="kw">&lt;</span>- floor(runif(1000)<span class="kw">+.4</span>)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">points</span> <span class="op">&lt;</span>- floor(runif(1000)<span class="ex">+.4</span>)</span></code></pre></div>
 <p>that generates a distribution with roughly 40% of 1s and 60% of 0s. So, our stream consists of a sequence of 0s and 1s generated using the uniform(phi) distribution where the phi parameter equals 0.4.</p>
 <p>If we don’t know this parameter and we try to learn it, we can assume that this parameter has prior uniform in the range [0,1] and thus the model that describes this scenario in the Winbugs language is</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">model</span>
-<span class="kw">{</span>
-    <span class="kw">phi</span> ~ dunif(0,1);
-    <span class="kw">y</span> ~ dbin(phi,N);
-<span class="kw">}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ex">model</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="ex">phi</span> ~ dunif(0,1);</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="ex">y</span> ~ dbin(phi,N);</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="kw">}</span></span></code></pre></div>
 <p>In this model N and y are known, so we provide this information in order to estimate our unknown parameter phi. We create the model and query the resulting parameter distribution:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">result</span> <span class="kw">&lt;</span>- list(y=sum(points), <span class="ot">N=</span>1000)
-<span class="kw">&gt;</span> <span class="kw">result</span>
-<span class="ot">$y</span>
-[<span class="kw">1</span>] 393
-
-<span class="ot">$N</span>
-[<span class="kw">1</span>] 1000
-
-<span class="kw">&gt;</span> <span class="kw">library</span>(rjags)
-<span class="kw">Loading</span> required package: coda
-<span class="kw">Loading</span> required package: lattice
-<span class="kw">linking</span> to JAGS 3.1.0
-<span class="kw">module</span> basemod loaded
-<span class="kw">module</span> bugs loaded
-<span class="kw">&gt;</span> <span class="kw">myModel</span> <span class="kw">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)
-<span class="kw">Compiling</span> model graph
-   <span class="kw">Resolving</span> undeclared variables
-   <span class="kw">Allocating</span> nodes
-   <span class="kw">Graph</span> Size: 5
-
-<span class="kw">Initializing</span> model
-
-<span class="kw">&gt;</span> <span class="kw">update</span>(myModel, 1000)
-  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
-<span class="kw">&gt;</span> <span class="kw">x</span> <span class="kw">&lt;</span>- jags.samples(myModel, c(<span class="st">&#39;phi&#39;</span>), <span class="kw">1000</span>)
-  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
-<span class="kw">&gt;</span> <span class="kw">x</span>
-<span class="ot">$phi</span>
-<span class="kw">mcarray</span>:
-[<span class="kw">1</span>] 0.3932681
-
-<span class="kw">Marginalizing</span> over: iteration(1000),<span class="kw">chain</span>(1) 
-
-<span class="kw">&gt;</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">result</span> <span class="op">&lt;</span>- list(y=sum(points), <span class="va">N=</span>1000)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">result</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="va">$y</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>[<span class="ex">1</span>] 393</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a><span class="va">$N</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>[<span class="ex">1</span>] 1000</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">library</span>(rjags)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a><span class="ex">Loading</span> required package: coda</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="ex">Loading</span> required package: lattice</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a><span class="ex">linking</span> to JAGS 3.1.0</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="ex">module</span> basemod loaded</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a><span class="ex">module</span> bugs loaded</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">myModel</span> <span class="op">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a><span class="ex">Compiling</span> model graph</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>   <span class="ex">Resolving</span> undeclared variables</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>   <span class="ex">Allocating</span> nodes</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>   <span class="ex">Graph</span> Size: 5</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a><span class="ex">Initializing</span> model</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">update</span>(myModel, 1000)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true"></a>  <span class="kw">|</span><span class="ex">**************************************************</span><span class="kw">|</span> <span class="ex">100%</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">x</span> <span class="op">&lt;</span>- jags.samples(myModel, c(<span class="st">&#39;phi&#39;</span>), <span class="ex">1000</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true"></a>  <span class="kw">|</span><span class="ex">**************************************************</span><span class="kw">|</span> <span class="ex">100%</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">x</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true"></a><span class="va">$phi</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true"></a><span class="ex">mcarray</span>:</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true"></a>[<span class="ex">1</span>] 0.3932681</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true"></a><span class="ex">Marginalizing</span> over: iteration(1000),<span class="ex">chain</span>(1) </span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true"></a><span class="op">&gt;</span></span></code></pre></div>
 <p>So the inferred value of phi is 0.3932. One interesting thing in Bayesian statistics is that it does not estimate points, but probabilistic distributions over the parameters. We can see how the phi parameter was estimated by examining the Monte Carlo Chain and the distribution of the generated values during the simulation</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">chain</span> <span class="kw">&lt;</span>- as.mcmc.list(x<span class="ot">$phi</span>)
-<span class="kw">&gt;</span> <span class="kw">plot</span>(chain)</code></pre></div>
-<div class="figure">
-<img src="chain.png" />
-
-</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">chain</span> <span class="op">&lt;</span>- as.mcmc.list(x<span class="va">$phi</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">plot</span>(chain)</span></code></pre></div>
+<p><img src="chain.png" /></p>
 <p>Where we can see that the values for phi in the chain were centered around the 0.4, the true parameter value.</p>
 </div>
 ]]></description>
     <pubDate>Tue, 13 Sep 2011 16:30:44 UT</pubDate>
     <guid>http://www.tonicebrian.com/posts/2011/09/13/getting-started-with-jags-for-bayesian-modelling.html</guid>
-    <dc:creator>Toni Cebrián</dc:creator>
-</item>
-<item>
-    <title>My working environment with Xmonad</title>
-    <link>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</link>
-    <description><![CDATA[<div class="blog-post">
-  <h2 class="blog-post-title">
-    My working environment with Xmonad
-  </h2>
-  <p class="blog-post-meta">
-    Posted on September  5, 2011
-    
-  </p>
-  <p>Fire a terminal, fire another terminal and tail some logs, open your browser and point to the web page you are developing, open your IDE and open three or four tabs with the code you suspect is causing the bug, put some breakpoints, alt-tab to the first terminal start your system under test, connect your debugging IDE to your system, perform some operations to your browser, catch the breakpoint, switch back and forth the code tabs, etc… This daily routine common to most developers, involves grabbing the mouse, arranging some windows, and switching context continuously. This creates a cognitive overload and a lack of productivity because developers are doing tasks not directly related to the task at hand.</p>
-<p>This is the reason I don’t use Gnome any more and I’ve switched to <a href="http://xmonad.org/">Xmonad</a> a tiling window manager that can be controlled almost exclusively with the keyboard. With this fully configurable window manager, I can move, resize, minimize, arrange, customize all the visible windows, move windows between workspaces, all with my hands not leaving the keyboard.The only thing I have not been able to accomplish is having the UrgentHook working for Skype. The Linux version of Skype fails to set the WM_URGENT X11 event when a new chat opens, and if I’m not in that workspace I don’t get any notification besides the bell. Still thinking about a good workaround, any ideas?</p>
-<p>Here is a screenshot of xmonad in action with  some applications in it,</p>
-<div class="figure">
-<img src="xmonad.png" />
-
-</div>
-<p>If you plan to install Xmonad in your computer, use version 0.10 or superior because it solves some nasty problems with Java applications. In case it is not yet ready for your favourite distribution, follow <a href="https://sites.google.com/site/jifengstechcollection/linux/xmonad">these instructions</a>. In order to have this configuration working, just write the following 3 files:</p>
-<ul>
-<li><p>.<em>xsession</em> with the programs you need to start when the session begins (network manager, batery manager, etc…). Put it in your $HOME dir.</p></li>
-<li><p>.<em>xmobarrc</em> with the configuration of your handy <a href="http://gorgias.mine.nu/xmobar/">textual status bar</a> . Put it in your $HOME</p></li>
-<li><p><em>xmonad.hs</em> with the configuration of the window manager itself. Put it under $HOME/.xmonad</p></li>
-</ul>
-<p><strong>xmonad.hs</strong> is a pure Haskell file for configuring the window manager, no XML, not another fancy configuration language. Some comments to the configuration file</p>
-<ul>
-<li><p><strong>lines 23-26</strong>, send Thunderbird and Skype to their dedicated workspaces</p></li>
-<li><p><strong>line 29</strong>, name the workspaces</p></li>
-<li><p><strong>lines 32-50</strong>, define new key combinations, for navigating the tiling windows, send windows to background and toggle between the tiled arrangement and focusing the whole screen into one window</p></li>
-<li><p><strong>lines 52-55</strong>, define how I want the windows to be arranged. Basically, create a specific configuration for Skype in its dedicated workspace, and for the rest of workspaces, don’t hide the menu, allow navigation with the cursors and minimize unwanted windows.</p></li>
-<li><p><strong>lines 57-77</strong>, ensemble the main xmonad window manager with the desired configuration. Spawn the status bar, and append the predefined layouts, keybindings and window hooks. Redefine some keys and fool Java setting the name of the Window Manager to LG3D in order to avoid problems with focus.</p></li>
-</ul>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> XMonad
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">DynamicLog</span>
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ICCCMFocus</span>
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageDocks</span>
-<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">Run</span>(spawnPipe)
-<span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">EZConfig</span>(additionalKeys)
-<span class="kw">import</span> System.<span class="fu">IO</span>
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageHelpers</span>
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">UrgencyHook</span>
-<span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">SetWMName</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Minimize</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">WindowNavigation</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">ToggleLayouts</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">IM</span> as IM
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">PerWorkspace</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Reflect</span>
-<span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Grid</span>
-<span class="kw">import</span> Data.<span class="fu">Ratio</span> ((%))
-
-<span class="kw">import</span> qualified Data.<span class="fu">Map</span> as M
-
--- Send applications to their dedicated Workspace
-myManageHook = composeAll
-                [ className =? <span class="st">&quot;Skype&quot;</span>         --&gt; doShift <span class="st">&quot;4:skype&quot;</span>,
-                  className =? <span class="st">&quot;Thunderbird&quot;</span>   --&gt; doShift <span class="st">&quot;2:mail&quot;</span>
-                ]
-
--- Name the workspaces
-myWorkspaces = [<span class="st">&quot;1:dev&quot;</span>,<span class="st">&quot;2:mail&quot;</span>,<span class="st">&quot;3:web&quot;</span>,<span class="st">&quot;4:skype&quot;</span>,<span class="st">&quot;5:media&quot;</span>, <span class="st">&quot;6:office&quot;</span>] ++ map show [<span class="dv">7</span>..<span class="dv">9</span>]
-
--- Add <span class="kw">new</span> Keys
-newKeys x = M.<span class="fu">union</span> (keys defaultConfig x) (M.<span class="fu">fromList</span> (myKeys x))
-
-myKeys conf@(XConfig {XMonad.<span class="fu">modMask</span> = modm}) =
-              [
-              -- Minimize a window
-                ((modm, xK_z),               withFocused minimizeWindow)
-              , ((modm .|. shiftMask, xK_z), sendMessage RestoreNextMinimizedWin  )
-              -- Window navigation <span class="kw">with</span> cursors
-              , ((modm,                 xK_Right), sendMessage $ Go R)
-              , ((modm,                 xK_Left ), sendMessage $ Go L)
-              , ((modm,                 xK_Up   ), sendMessage $ Go U)
-              , ((modm,                 xK_Down ), sendMessage $ Go D)
-              , ((modm .|. controlMask, xK_Right), sendMessage $ Swap R)
-              , ((modm .|. controlMask, xK_Left ), sendMessage $ Swap L)
-              , ((modm .|. controlMask, xK_Up   ), sendMessage $ Swap U)
-              , ((modm .|. controlMask, xK_Down ), sendMessage $ Swap D)
-              -- Togle Fullscreen
-              , ((modm,                 xK_f    ), sendMessage ToggleLayout)
-              ]
-
--- Define the default layout
-skypeLayout = IM.<span class="fu">withIM</span> (<span class="dv">1</span>%<span class="dv">7</span>) (IM.<span class="fu">And</span> (ClassName <span class="st">&quot;Skype&quot;</span>)  (Role <span class="st">&quot;MainWindow&quot;</span>)) Grid
-normalLayout = windowNavigation $ minimize $ avoidStruts $ onWorkspace <span class="st">&quot;4:skype&quot;</span> skypeLayout $ layoutHook defaultConfig
-myLayout = <span class="fu">toggleLayouts</span> (Full) normalLayout
-
--- Main executable
-main = <span class="kw">do</span>
-    xmproc &lt;- spawnPipe <span class="st">&quot;xmobar /home/cebrian/.xmobarrc&quot;</span>
-    xmonad $ withUrgencyHook NoUrgencyHook $ defaultConfig
-        { manageHook = manageDocks &lt;+&gt; myManageHook &lt;+&gt; manageHook defaultConfig
-        , keys = newKeys
-        , workspaces = myWorkspaces
-        , layoutHook = myLayout
-        , logHook = takeTopFocus &gt;&gt; dynamicLogWithPP xmobarPP
-                        { ppOutput = hPutStrLn xmproc
-                        , ppTitle = xmobarColor <span class="st">&quot;green&quot;</span> <span class="st">&quot;&quot;</span> . shorten <span class="dv">50</span>
-                        , ppUrgent = xmobarColor <span class="st">&quot;yellow&quot;</span> <span class="st">&quot;red&quot;</span> . xmobarStrip
-                        }
-        , modMask = mod4Mask     -- Rebind Mod to the Windows key
-        , terminal = <span class="st">&quot;terminator&quot;</span>
-        , startupHook = setWMName <span class="st">&quot;LG3D&quot;</span>
-        } `additionalKeys`
-        [ ((controlMask .|. shiftMask, xK_l), spawn <span class="st">&quot;xscreensaver-command -lock&quot;</span>)
-        , ((controlMask, xK_Print), spawn <span class="st">&quot;sleep 0.2; scrot -s&quot;</span>)
-        , ((<span class="dv">0</span>, xK_Print), spawn <span class="st">&quot;scrot&quot;</span>)
-        ]</code></pre></div>
-<p><strong>.xsession</strong></p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co">#!/bin/bash</span>
-
-<span class="kw">xrdb</span> -merge .Xresources
-
-<span class="co"># Configure xrandr for multiple monitors</span>
-<span class="co"># External output may be &quot;VGA&quot; or &quot;VGA-0&quot; or &quot;DVI-0&quot; or &quot;TMDS-1&quot;</span>
-<span class="ot">EXTERNAL_OUTPUT=</span><span class="st">&quot;VGA-0&quot;</span>
-<span class="ot">INTERNAL_OUTPUT=</span><span class="st">&quot;LVDS&quot;</span>
-<span class="co"># EXTERNAL_LOCATION may be one of: left, right, above, or below</span>
-<span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;left&quot;</span>
-
-<span class="co"># In case I want to have both monitors on</span>
-<span class="kw">case</span> <span class="st">&quot;</span><span class="ot">$EXTERNAL_LOCATION</span><span class="st">&quot;</span><span class="kw"> in</span>
-       left<span class="kw">|</span>LEFT<span class="kw">)</span>
-               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
-               <span class="kw">;;</span>
-       right<span class="kw">|</span>RIGHT<span class="kw">)</span>
-               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--right-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
-               <span class="kw">;;</span>
-       top<span class="kw">|</span>TOP<span class="kw">|</span>above<span class="kw">|</span>ABOVE<span class="kw">)</span>
-               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--above </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
-               <span class="kw">;;</span>
-       bottom<span class="kw">|</span>BOTTOM<span class="kw">|</span>below<span class="kw">|</span>BELOW<span class="kw">)</span>
-               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--below </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
-               <span class="kw">;;</span>
-       *<span class="kw">)</span>
-               <span class="ot">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="ot">$INTERNAL_OUTPUT</span><span class="st">&quot;</span>
-               <span class="kw">;;</span>
-<span class="kw">esac</span>
-<span class="kw">xrandr</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="ot">$EXTERNAL_OUTPUT</span> <span class="kw">|</span> <span class="kw">grep</span> <span class="st">&quot; connected &quot;</span>
-
-<span class="kw">if [</span> <span class="ot">$?</span> <span class="ot">-eq</span> 0<span class="kw"> ]</span>; <span class="kw">then</span>
-    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --off --output <span class="ot">$EXTERNAL_OUTPUT</span> --auto
-    <span class="co"># Alternative command in case of trouble:</span>
-    <span class="co"># (sleep 2; xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_LOCATION) &amp;</span>
-<span class="kw">else</span>
-    <span class="kw">xrandr</span> --output <span class="ot">$INTERNAL_OUTPUT</span> --auto --output <span class="ot">$EXTERNAL_OUTPUT</span> --off
-<span class="kw">fi</span>
-
-<span class="kw">trayer</span> --edge top --align right --SetDockType true --SetPartialStrut true --expand true --width 15 --height 12 --transparent true --tint 0x000000 <span class="kw">&amp;</span>
-
-<span class="kw">xscreensaver</span> -no-splash <span class="kw">&amp;</span>
-
-<span class="co"># Allow nautilus to take care of plugin USB drives and Dropbox icons</span>
-<span class="kw">nautilus</span> --no-desktop -n <span class="kw">&amp;</span>
-
-<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/nm-applet<span class="kw"> ]</span> ; <span class="kw">then</span>
-   <span class="kw">nm-applet</span> --sm-disable <span class="kw">&amp;</span>
-<span class="kw">fi</span>
-
-<span class="kw">if [</span> <span class="ot">-x</span> /usr/bin/gnome-power-manager<span class="kw"> ]</span> ; <span class="kw">then</span>
-   <span class="kw">sleep</span> 1
-   <span class="kw">gnome-power-manager</span> <span class="kw">&amp;</span>
-<span class="kw">fi</span>
-
-<span class="kw">/usr/bin/gnome-volume-control-applet</span> <span class="kw">&amp;</span>
-<span class="kw">dropbox</span> start <span class="kw">&amp;</span>
-
-<span class="kw">exec</span> /home/cebrian/.cabal/bin/xmonad</code></pre></div>
-<p><strong>.xmobarrc</strong></p>
-<pre class="plain"><code>Config { font = &quot;-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*&quot;
-       , bgColor = &quot;black&quot;
-       , fgColor = &quot;grey&quot;
-       , position = TopW L 85
-       , commands = [ Run Cpu [&quot;-L&quot;,&quot;3&quot;,&quot;-H&quot;,&quot;50&quot;,&quot;--normal&quot;,&quot;green&quot;,&quot;--high&quot;,&quot;red&quot;] 10
-                    , Run Memory [&quot;-t&quot;,&quot;Mem: &lt;usedratio&gt;%&quot;] 10
-                    , Run Swap [] 10
-                    , Run Date &quot;%a %b %_d %Y %H:%M:%S&quot; &quot;date&quot; 10
-                    , Run StdinReader
-                    ]
-       , sepChar = &quot;%&quot;
-       , alignSep = &quot;}{&quot;
-       , template = &quot;%StdinReader% }{ %cpu% | %memory% * %swap%    &lt;fc=#ee9a00&gt;%date%&lt;/fc&gt;&quot;
-       }</code></pre>
-<p>And don’t forget to add an entry for your new Xmonad desktop in <strong>/usr/share/applications/xmonad.desktop</strong> changing the path to your appropiate home</p>
-<pre class="plain"><code>[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=Xmonad
-Exec=&quot;YOUR HOME HERE&quot;/.xsession
-NoDisplay=true
-X-GNOME-WMName=Xmonad
-X-GNOME-Autostart-Phase=WindowManager
-X-GNOME-Provides=windowmanager
-X-GNOME-Autostart-Notify=true</code></pre>
-<p>And to <strong>/usr/share/xsessions/xmonad.desktop</strong></p>
-<pre class="plain"><code>[Desktop Entry]
-Encoding=UTF-8
-Name=XMonad
-Comment=Lightweight tiling window manager
-Exec=&quot;YOUR HOME HERE&quot;/.xsession
-Icon=xmonad.png
-Type=XSession</code></pre>
-</div>
-]]></description>
-    <pubDate>Mon, 05 Sep 2011 11:00:16 UT</pubDate>
-    <guid>http://www.tonicebrian.com/posts/2011/09/05/my-working-environment-with-xmonad.html</guid>
     <dc:creator>Toni Cebrián</dc:creator>
 </item>
 

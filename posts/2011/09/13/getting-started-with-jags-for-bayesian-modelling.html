@@ -36,68 +36,65 @@
   </p>
   <p>In the past if you wanted to do some Bayesian Modelling using a Gibbs sampler you had to rely on <a href="http://www.mrc-bsu.cam.ac.uk/bugs/winbugs/contents.shtml">Winbugs</a> but it isn’t open source and it only runs in Windows. The <a href="http://mcmc-jags.sourceforge.net/">JAGS project</a> started as a full feature alternative for the Linux platform. Here are some instructions for getting started</p>
 <p>First install the required dependencies. In my Ubuntu 11.04, is something like:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">sudo</span> apt-get install gfortran liblapack-dev libltdl-dev r-base-core</span></code></pre></div>
 <p>For Ubuntu 11.04 you have to install JAGS from sources, but it seems that this version will be packaged in the next Ubuntu release. Download the software from <a href="http://sourceforge.net/projects/mcmc-jags/">here</a> and install.</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">tar</span> xvfz JAGS-3.1.0.tar.gz
-<span class="kw">cd</span> JAGS-3.1.0
-<span class="kw">./configure</span>
-<span class="kw">make</span>
-<span class="kw">sudo</span> make install</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">tar</span> xvfz JAGS-3.1.0.tar.gz</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="bu">cd</span> JAGS-3.1.0</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="ex">./configure</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="fu">make</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="fu">sudo</span> make install</span></code></pre></div>
 <p>Now fire R and install the interface package rjags</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">R</span>
-<span class="kw">...</span>
-<span class="kw">&gt;</span> <span class="kw">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>$ <span class="ex">R</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="ex">...</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">install.packages</span>(<span class="st">&quot;rjags&quot;</span>,dependencies=TRUE)</span></code></pre></div>
 <p>Now let’s do something interesting (although pretty simple). Let’s assume we have a stream of 1s and 0s with an unknown proportion of each one. From R we can generate such distribution with the command</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">points</span> <span class="kw">&lt;</span>- floor(runif(1000)<span class="kw">+.4</span>)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">points</span> <span class="op">&lt;</span>- floor(runif(1000)<span class="ex">+.4</span>)</span></code></pre></div>
 <p>that generates a distribution with roughly 40% of 1s and 60% of 0s. So, our stream consists of a sequence of 0s and 1s generated using the uniform(phi) distribution where the phi parameter equals 0.4.</p>
 <p>If we don’t know this parameter and we try to learn it, we can assume that this parameter has prior uniform in the range [0,1] and thus the model that describes this scenario in the Winbugs language is</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">model</span>
-<span class="kw">{</span>
-    <span class="kw">phi</span> ~ dunif(0,1);
-    <span class="kw">y</span> ~ dbin(phi,N);
-<span class="kw">}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ex">model</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="ex">phi</span> ~ dunif(0,1);</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="ex">y</span> ~ dbin(phi,N);</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="kw">}</span></span></code></pre></div>
 <p>In this model N and y are known, so we provide this information in order to estimate our unknown parameter phi. We create the model and query the resulting parameter distribution:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">result</span> <span class="kw">&lt;</span>- list(y=sum(points), <span class="ot">N=</span>1000)
-<span class="kw">&gt;</span> <span class="kw">result</span>
-<span class="ot">$y</span>
-[<span class="kw">1</span>] 393
-
-<span class="ot">$N</span>
-[<span class="kw">1</span>] 1000
-
-<span class="kw">&gt;</span> <span class="kw">library</span>(rjags)
-<span class="kw">Loading</span> required package: coda
-<span class="kw">Loading</span> required package: lattice
-<span class="kw">linking</span> to JAGS 3.1.0
-<span class="kw">module</span> basemod loaded
-<span class="kw">module</span> bugs loaded
-<span class="kw">&gt;</span> <span class="kw">myModel</span> <span class="kw">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)
-<span class="kw">Compiling</span> model graph
-   <span class="kw">Resolving</span> undeclared variables
-   <span class="kw">Allocating</span> nodes
-   <span class="kw">Graph</span> Size: 5
-
-<span class="kw">Initializing</span> model
-
-<span class="kw">&gt;</span> <span class="kw">update</span>(myModel, 1000)
-  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
-<span class="kw">&gt;</span> <span class="kw">x</span> <span class="kw">&lt;</span>- jags.samples(myModel, c(<span class="st">'phi'</span>), <span class="kw">1000</span>)
-  <span class="kw">|**************************************************|</span> <span class="kw">100%</span>
-<span class="kw">&gt;</span> <span class="kw">x</span>
-<span class="ot">$phi</span>
-<span class="kw">mcarray</span>:
-[<span class="kw">1</span>] 0.3932681
-
-<span class="kw">Marginalizing</span> over: iteration(1000),<span class="kw">chain</span>(1) 
-
-<span class="kw">&gt;</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">result</span> <span class="op">&lt;</span>- list(y=sum(points), <span class="va">N=</span>1000)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">result</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="va">$y</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>[<span class="ex">1</span>] 393</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a><span class="va">$N</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>[<span class="ex">1</span>] 1000</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">library</span>(rjags)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a><span class="ex">Loading</span> required package: coda</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="ex">Loading</span> required package: lattice</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a><span class="ex">linking</span> to JAGS 3.1.0</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="ex">module</span> basemod loaded</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a><span class="ex">module</span> bugs loaded</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">myModel</span> <span class="op">&lt;</span>- jags.model(<span class="st">&quot;model.dat&quot;</span>, result)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a><span class="ex">Compiling</span> model graph</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>   <span class="ex">Resolving</span> undeclared variables</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>   <span class="ex">Allocating</span> nodes</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>   <span class="ex">Graph</span> Size: 5</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a><span class="ex">Initializing</span> model</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">update</span>(myModel, 1000)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true"></a>  <span class="kw">|</span><span class="ex">**************************************************</span><span class="kw">|</span> <span class="ex">100%</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">x</span> <span class="op">&lt;</span>- jags.samples(myModel, c(<span class="st">'phi'</span>), <span class="ex">1000</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true"></a>  <span class="kw">|</span><span class="ex">**************************************************</span><span class="kw">|</span> <span class="ex">100%</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">x</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true"></a><span class="va">$phi</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true"></a><span class="ex">mcarray</span>:</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true"></a>[<span class="ex">1</span>] 0.3932681</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true"></a><span class="ex">Marginalizing</span> over: iteration(1000),<span class="ex">chain</span>(1) </span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true"></a><span class="op">&gt;</span></span></code></pre></div>
 <p>So the inferred value of phi is 0.3932. One interesting thing in Bayesian statistics is that it does not estimate points, but probabilistic distributions over the parameters. We can see how the phi parameter was estimated by examining the Monte Carlo Chain and the distribution of the generated values during the simulation</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">chain</span> <span class="kw">&lt;</span>- as.mcmc.list(x<span class="ot">$phi</span>)
-<span class="kw">&gt;</span> <span class="kw">plot</span>(chain)</code></pre></div>
-<div class="figure">
-<img src="chain.png" />
-
-</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">chain</span> <span class="op">&lt;</span>- as.mcmc.list(x<span class="va">$phi</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">plot</span>(chain)</span></code></pre></div>
+<p><img src="chain.png" /></p>
 <p>Where we can see that the values for phi in the chain were centered around the 0.4, the true parameter value.</p>
 </div>
 

@@ -38,122 +38,112 @@
 <p>I know that the whole exercise here can be easily done with the R package <a href="http://cran.r-project.org/web/packages/gbm/index.html">gbm</a> but I wanted to do the exercise using Python. Since learning several languages well enough is difficult and time consuming I would prefer to stick all my data analysis to Python instead doing it in R, even with R being superior on some cases. But having only one language for doing all your scripting, systems programming and prototyping PLUS your data analysis is a good reason for me. Your upfront effort of learning the language, setting up your tools and editors, etc. is done only once instead of twice.</p>
 <h2 id="data-preparation-and-model-fitting">Data Preparation and Model Fitting</h2>
 <p>The first thing to do is to load the data into a <a href="http://pandas.pydata.org/pandas-docs/stable">Pandas</a> dataframe</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> numpy <span class="im">as</span> np
-<span class="im">import</span> pandas <span class="im">as</span> pd
-
-columnNames <span class="op">=</span> [<span class="st">'HouseVal'</span>,<span class="st">'MedInc'</span>,<span class="st">'HouseAge'</span>,<span class="st">'AveRooms'</span>,
-               <span class="co">'AveBedrms'</span>,<span class="st">'Population'</span>,<span class="st">'AveOccup'</span>,<span class="st">'Latitude'</span>,<span class="st">'Longitud'</span>]
-
-df <span class="op">=</span> pd.read_csv(<span class="st">'cadata.txt'</span>,skiprows<span class="op">=</span><span class="dv">27</span>, sep<span class="op">=</span><span class="st">'\s+'</span>,names<span class="op">=</span>columnNames)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>columnNames <span class="op">=</span> [<span class="st">'HouseVal'</span>,<span class="st">'MedInc'</span>,<span class="st">'HouseAge'</span>,<span class="st">'AveRooms'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>               <span class="st">'AveBedrms'</span>,<span class="st">'Population'</span>,<span class="st">'AveOccup'</span>,<span class="st">'Latitude'</span>,<span class="st">'Longitud'</span>]</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>df <span class="op">=</span> pd.read_csv(<span class="st">'cadata.txt'</span>,skiprows<span class="op">=</span><span class="dv">27</span>, sep<span class="op">=</span><span class="st">'\s+'</span>,names<span class="op">=</span>columnNames)</span></code></pre></div>
 <p>Now we have to split the datasets into training and validation. The training data will be used to generate the trees that will constitute the final averaged model.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> random
-
-X <span class="op">=</span> df[df.columns <span class="op">-</span> [<span class="st">'HouseVal'</span>]]
-Y <span class="op">=</span> df[<span class="st">'HouseVal'</span>]
-rows <span class="op">=</span> random.sample(df.index, <span class="bu">int</span>(<span class="bu">len</span>(df)<span class="op">*</span>.<span class="dv">80</span>))
-x_train, y_train <span class="op">=</span> X.ix[rows],Y.ix[rows]
-x_test,y_test  <span class="op">=</span> X.drop(rows),Y.drop(rows)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">import</span> random</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>X <span class="op">=</span> df[df.columns <span class="op">-</span> [<span class="st">'HouseVal'</span>]]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>Y <span class="op">=</span> df[<span class="st">'HouseVal'</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>rows <span class="op">=</span> random.sample(df.index, <span class="bu">int</span>(<span class="bu">len</span>(df)<span class="op">*</span><span class="fl">.80</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>x_train, y_train <span class="op">=</span> X.ix[rows],Y.ix[rows]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>x_test,y_test  <span class="op">=</span> X.drop(rows),Y.drop(rows)</span></code></pre></div>
 <p>We then fit a Gradient Tree Boosting model to the data using the <a href="http://scikit-learn.org/stable/">scikit-learn</a> package. We will use 500 trees with each tree having a depth of 6 levels. In order to get results similar to those in the book we also use the <a href="http://en.wikipedia.org/wiki/Huber_loss_function">Huber loss function</a>.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error,r2_score
-<span class="im">from</span> sklearn.ensemble <span class="im">import</span> GradientBoostingRegressor
-params <span class="op">=</span> {<span class="st">'n_estimators'</span>: <span class="dv">500</span>, <span class="st">'max_depth'</span>: <span class="dv">6</span>,
-        <span class="co">'learn_rate'</span>: <span class="fl">0.1</span>, <span class="st">'loss'</span>: <span class="st">'huber'</span>,<span class="st">'alpha'</span>:<span class="fl">0.95</span>}
-clf <span class="op">=</span> GradientBoostingRegressor(<span class="op">**</span>params).fit(x_train, y_train)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error,r2_score</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> GradientBoostingRegressor</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>params <span class="op">=</span> {<span class="st">'n_estimators'</span>: <span class="dv">500</span>, <span class="st">'max_depth'</span>: <span class="dv">6</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>        <span class="st">'learn_rate'</span>: <span class="fl">0.1</span>, <span class="st">'loss'</span>: <span class="st">'huber'</span>,<span class="st">'alpha'</span>:<span class="fl">0.95</span>}</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>clf <span class="op">=</span> GradientBoostingRegressor(<span class="op">**</span>params).fit(x_train, y_train)</span></code></pre></div>
 <p>For me, the Mean Squared Error wasn’t much informative and used instead the R2 coefficient of determination. This measure is a number indicating how well a variable is able to predict the other. Values close to 0 means poor prediction and values close to 1 means perfect prediction. In the book, they claim a 0.84 against a 0.86 reported in the paper that created the dataset using a highly tuned algorithm. I’m getting a good 0.83 without much tunning of the parameters so it’s a good out of the box technique.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">mse <span class="op">=</span> mean_squared_error(y_test, clf.predict(x_test))
-r2 <span class="op">=</span> r2_score(y_test, clf.predict(x_test))
-
-<span class="bu">print</span>(<span class="st">&quot;MSE: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> mse)
-<span class="bu">print</span>(<span class="st">&quot;R2: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> r2)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>mse <span class="op">=</span> mean_squared_error(y_test, clf.predict(x_test))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>r2 <span class="op">=</span> r2_score(y_test, clf.predict(x_test))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="bu">print</span>(<span class="st">&quot;MSE: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> mse)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="bu">print</span>(<span class="st">&quot;R2: </span><span class="sc">%.4f</span><span class="st">&quot;</span> <span class="op">%</span> r2)</span></code></pre></div>
 <h2 id="data-analysis">Data Analysis</h2>
 <p>Let’s plot how does the training and testing error behave</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt
-
-<span class="co"># compute test set deviance</span>
-test_score <span class="op">=</span> np.zeros((params[<span class="st">'n_estimators'</span>],), dtype<span class="op">=</span>np.float64)
-
-<span class="cf">for</span> i, y_pred <span class="op">in</span> <span class="bu">enumerate</span>(clf.staged_decision_function(x_test)):
-    test_score[i] <span class="op">=</span> clf.loss_(y_test, y_pred)
-
-plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
-plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
-plt.title(<span class="st">'Deviance'</span>)
-plt.plot(np.arange(params[<span class="st">'n_estimators'</span>]) <span class="op">+</span> <span class="dv">1</span>, clf.train_score_, <span class="st">'b-'</span>,
-                label<span class="op">=</span><span class="st">'Training Set Deviance'</span>)
-plt.plot(np.arange(params[<span class="st">'n_estimators'</span>]) <span class="op">+</span> <span class="dv">1</span>, test_score, <span class="st">'r-'</span>,
-                label<span class="op">=</span><span class="st">'Test Set Deviance'</span>)
-plt.legend(loc<span class="op">=</span><span class="st">'upper right'</span>)
-plt.xlabel(<span class="st">'Boosting Iterations'</span>)
-plt.ylabel(<span class="st">'Deviance'</span>)</code></pre></div>
-<div class="figure">
-<img src="Errors.png" />
-
-</div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="co"># compute test set deviance</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>test_score <span class="op">=</span> np.zeros((params[<span class="st">'n_estimators'</span>],), dtype<span class="op">=</span>np.float64)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="cf">for</span> i, y_pred <span class="kw">in</span> <span class="bu">enumerate</span>(clf.staged_decision_function(x_test)):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    test_score[i] <span class="op">=</span> clf.loss_(y_test, y_pred)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>plt.title(<span class="st">'Deviance'</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>plt.plot(np.arange(params[<span class="st">'n_estimators'</span>]) <span class="op">+</span> <span class="dv">1</span>, clf.train_score_, <span class="st">'b-'</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>                label<span class="op">=</span><span class="st">'Training Set Deviance'</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>plt.plot(np.arange(params[<span class="st">'n_estimators'</span>]) <span class="op">+</span> <span class="dv">1</span>, test_score, <span class="st">'r-'</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>                label<span class="op">=</span><span class="st">'Test Set Deviance'</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>plt.legend(loc<span class="op">=</span><span class="st">'upper right'</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>plt.xlabel(<span class="st">'Boosting Iterations'</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>plt.ylabel(<span class="st">'Deviance'</span>)</span></code></pre></div>
+<p><img src="Errors.png" /></p>
 <p>As you can see in the previous graph, although the train error keeps going down as we add more trees to our model, the test error remains more or less constant and doesn’t incur in overfitting. This is mainly due to the shrinkage parameter and one of the good features of this algorithm.</p>
 <p>When doing data mining as important as finding a good model is being able to interpret it, because based on that analysis and interpretation preemptive actions can be performed. Although base trees are easily interpretable when you are adding several of those trees interpretation is more difficult. You usually rely on some measures of the predictive power of each feature. Let’s plot feature importance in predicting the House Value.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">feature_importance <span class="op">=</span> clf.feature_importances_
-<span class="co"># make importances relative to max importance</span>
-feature_importance <span class="op">=</span> <span class="fl">100.0</span> <span class="op">*</span> (feature_importance <span class="op">/</span> feature_importance.<span class="bu">max</span>())
-sorted_idx <span class="op">=</span> np.argsort(feature_importance)
-pos <span class="op">=</span> np.arange(sorted_idx.shape[<span class="dv">0</span>]) <span class="op">+</span> .<span class="dv">5</span>
-plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))
-plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
-plt.barh(pos, feature_importance[sorted_idx], align<span class="op">=</span><span class="st">'center'</span>)
-plt.yticks(pos, X.columns[sorted_idx])
-plt.xlabel(<span class="st">'Relative Importance'</span>)
-plt.title(<span class="st">'Variable Importance'</span>)
-plt.show()</code></pre></div>
-<div class="figure">
-<img src="RelativeImportance.png" />
-
-</div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>feature_importance <span class="op">=</span> clf.feature_importances_</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="co"># make importances relative to max importance</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>feature_importance <span class="op">=</span> <span class="fl">100.0</span> <span class="op">*</span> (feature_importance <span class="op">/</span> feature_importance.<span class="bu">max</span>())</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>sorted_idx <span class="op">=</span> np.argsort(feature_importance)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>pos <span class="op">=</span> np.arange(sorted_idx.shape[<span class="dv">0</span>]) <span class="op">+</span> <span class="fl">.5</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>plt.subplot(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>plt.barh(pos, feature_importance[sorted_idx], align<span class="op">=</span><span class="st">'center'</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>plt.yticks(pos, X.columns[sorted_idx])</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>plt.xlabel(<span class="st">'Relative Importance'</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>plt.title(<span class="st">'Variable Importance'</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>plt.show()</span></code></pre></div>
+<p><img src="RelativeImportance.png" /></p>
 <p>Once variable importance has been identified we could try to investigate how those variables interact between them. For instance, we can plot the dependence of the target variable with another variable has been averaged over the values of the other variables not being taken into consideration. Some variables present a clear monotonic dependence with the target value, while others seem not very related to the target variable even when they ranked high in the previous plot. This could be signaling an interaction between variables that could be further studied.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sklearn.ensemble.partial_dependence <span class="im">import</span> plot_partial_dependence
-
-fig, axs <span class="op">=</span> plot_partial_dependence(clf, x_train,
-                                   features<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">6</span>],
-                                   feature_names<span class="op">=</span>x_train.columns,
-                                   n_cols<span class="op">=</span><span class="dv">2</span>)
-
-fig.show()</code></pre></div>
-<div class="figure">
-<img src="panel.png" alt="Partial Dependence" />
-<p class="caption">Partial Dependence</p>
-</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="im">from</span> sklearn.ensemble.partial_dependence <span class="im">import</span> plot_partial_dependence</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>fig, axs <span class="op">=</span> plot_partial_dependence(clf, x_train,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>                                   features<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">6</span>],</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>                                   feature_names<span class="op">=</span>x_train.columns,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>                                   n_cols<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>fig.show()</span></code></pre></div>
+<figure>
+<img src="panel.png" alt /><figcaption>Partial Dependence</figcaption>
+</figure>
 <p>The last step performed was to explore the capabilities of the Python libraries when plotting data in a map. Here we are plotting the predicted House Value in California using Latitude and Longitude as the axis for plotting this data in the map.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> mpl_toolkits.basemap <span class="im">import</span> Basemap
-predDf <span class="op">=</span> pd.DataFrame(x_test.copy())
-predDf[<span class="st">'y_pred'</span>] <span class="op">=</span> clf.predict(x_test)
-
-<span class="kw">def</span> california_map(ax<span class="op">=</span><span class="va">None</span>, lllat<span class="op">=</span><span class="fl">31.5</span>,urlat<span class="op">=</span><span class="fl">42.5</span>,
-                   lllon<span class="op">=-</span><span class="dv">124</span>,urlon<span class="op">=-</span><span class="dv">113</span>):
-    m <span class="op">=</span> Basemap(ax<span class="op">=</span>ax, projection<span class="op">=</span><span class="st">'stere'</span>,
-                lon_0<span class="op">=</span>(urlon <span class="op">+</span> lllon) <span class="op">/</span> <span class="dv">2</span>,
-                lat_0<span class="op">=</span>(urlat <span class="op">+</span> lllat) <span class="op">/</span> <span class="dv">2</span>,
-                llcrnrlat<span class="op">=</span>lllat, urcrnrlat<span class="op">=</span>urlat,
-                llcrnrlon<span class="op">=</span>lllon, urcrnrlon<span class="op">=</span>urlon,
-                resolution<span class="op">=</span><span class="st">'f'</span>)
-    m.drawstates()
-    m.drawcountries()
-    m.drawcoastlines(color<span class="op">=</span><span class="st">'lightblue'</span>)
-    <span class="cf">return</span> m
-
-plt.figure()
-m<span class="op">=</span> california_map()
-predDf <span class="op">=</span> predDf.sort(<span class="st">'y_pred'</span>) <span class="co"># Useful for plotting</span>
-x,y <span class="op">=</span> m(predDf[<span class="st">'Longitud'</span>],predDf[<span class="st">'Latitude'</span>])
-serieA <span class="op">=</span> (np.array(predDf[<span class="st">'y_pred'</span>]) <span class="op">-</span> predDf[<span class="st">'y_pred'</span>].<span class="bu">min</span>())<span class="op">/</span>(predDf[<span class="st">'y_pred'</span>].<span class="bu">max</span>()<span class="op">-</span>predDf[<span class="st">'y_pred'</span>].<span class="bu">min</span>())
-<span class="co"># z = plt.cm.jet(serieA)</span>
-z <span class="op">=</span> np.array(predDf[<span class="st">'y_pred'</span>])<span class="op">/</span><span class="dv">1000</span>
-m.scatter(x,y,c<span class="op">=</span>z,s<span class="op">=</span><span class="dv">60</span>,alpha<span class="op">=</span><span class="fl">0.5</span>,edgecolors<span class="op">=</span><span class="st">'none'</span>)
-c <span class="op">=</span> m.colorbar(location<span class="op">=</span><span class="st">'right'</span>)
-c.set_label(<span class="st">&quot;House Value (Thousands of $)&quot;</span>)
-m.plot()
-plt.show()</code></pre></div>
-<div class="figure">
-<img src="California.png" />
-
-</div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="im">from</span> mpl_toolkits.basemap <span class="im">import</span> Basemap</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>predDf <span class="op">=</span> pd.DataFrame(x_test.copy())</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>predDf[<span class="st">'y_pred'</span>] <span class="op">=</span> clf.predict(x_test)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="kw">def</span> california_map(ax<span class="op">=</span><span class="va">None</span>, lllat<span class="op">=</span><span class="fl">31.5</span>,urlat<span class="op">=</span><span class="fl">42.5</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>                   lllon<span class="op">=-</span><span class="dv">124</span>,urlon<span class="op">=-</span><span class="dv">113</span>):</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    m <span class="op">=</span> Basemap(ax<span class="op">=</span>ax, projection<span class="op">=</span><span class="st">'stere'</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>                lon_0<span class="op">=</span>(urlon <span class="op">+</span> lllon) <span class="op">/</span> <span class="dv">2</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>                lat_0<span class="op">=</span>(urlat <span class="op">+</span> lllat) <span class="op">/</span> <span class="dv">2</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>                llcrnrlat<span class="op">=</span>lllat, urcrnrlat<span class="op">=</span>urlat,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>                llcrnrlon<span class="op">=</span>lllon, urcrnrlon<span class="op">=</span>urlon,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>                resolution<span class="op">=</span><span class="st">'f'</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    m.drawstates()</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>    m.drawcountries()</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>    m.drawcoastlines(color<span class="op">=</span><span class="st">'lightblue'</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>    <span class="cf">return</span> m</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>plt.figure()</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>m<span class="op">=</span> california_map()</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>predDf <span class="op">=</span> predDf.sort(<span class="st">'y_pred'</span>) <span class="co"># Useful for plotting</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>x,y <span class="op">=</span> m(predDf[<span class="st">'Longitud'</span>],predDf[<span class="st">'Latitude'</span>])</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>serieA <span class="op">=</span> (np.array(predDf[<span class="st">'y_pred'</span>]) <span class="op">-</span> predDf[<span class="st">'y_pred'</span>].<span class="bu">min</span>())<span class="op">/</span>(predDf[<span class="st">'y_pred'</span>].<span class="bu">max</span>()<span class="op">-</span>predDf[<span class="st">'y_pred'</span>].<span class="bu">min</span>())</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a><span class="co"># z = plt.cm.jet(serieA)</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>z <span class="op">=</span> np.array(predDf[<span class="st">'y_pred'</span>])<span class="op">/</span><span class="dv">1000</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>m.scatter(x,y,c<span class="op">=</span>z,s<span class="op">=</span><span class="dv">60</span>,alpha<span class="op">=</span><span class="fl">0.5</span>,edgecolors<span class="op">=</span><span class="st">'none'</span>)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a>c <span class="op">=</span> m.colorbar(location<span class="op">=</span><span class="st">'right'</span>)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a>c.set_label(<span class="st">&quot;House Value (Thousands of $)&quot;</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>m.plot()</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>plt.show()</span></code></pre></div>
+<p><img src="California.png" /></p>
 <h2 id="addendum">Addendum</h2>
 <p>This blog post was written using <a href="http://pylit.berlios.de">Pylit</a> as the tool for doing <a href="http://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>. The code can be seen <a href="https://gist.github.com/4018084">here</a>. I think that literate programming is way superior to other software methodologies like TDD when coding algorithms for data analysis. The main problem I find right now is the lack of proper tooling for really taking advantage of literate programming, but this is a technique that I’m definitely going to research deeper.</p>
 </div>

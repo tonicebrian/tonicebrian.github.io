@@ -42,65 +42,65 @@
 pip install paramiko</code></pre>
 <p>All the instructions in this post assume that you have in your <code>$HOME/.ssh/config</code> file the required info for connecting to a remote machine so you don’t risk of publishing usernames and passwords when pushing to a repo.</p>
 <p>Here is the snippet that creates the connection:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="co"># Create a SSH connection</span>
-<span class="im">import</span> paramiko
-<span class="im">import</span> os
-
-ssh <span class="op">=</span> paramiko.SSHClient()
-ssh._policy <span class="op">=</span> paramiko.WarningPolicy()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-ssh_config <span class="op">=</span> paramiko.SSHConfig()
-user_config_file <span class="op">=</span> os.path.expanduser(<span class="st">&quot;~/.ssh/config&quot;</span>)
-<span class="cf">if</span> os.path.exists(user_config_file):
-    <span class="cf">with</span> <span class="bu">open</span>(user_config_file) <span class="im">as</span> f:
-        ssh_config.parse(f)
-
-cfg <span class="op">=</span> {<span class="st">'hostname'</span>: THE_HOST_NAME_IN_CONFIG}
-
-user_config <span class="op">=</span> ssh_config.lookup(cfg[<span class="st">'hostname'</span>])
-cfg[<span class="st">&quot;hostname&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;hostname&quot;</span>]
-cfg[<span class="st">&quot;username&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;user&quot;</span>]
-key<span class="op">=</span>paramiko.RSAKey.from_private_key_file(privateKey)
-cfg[<span class="st">&quot;pkey&quot;</span>] <span class="op">=</span> key
-
-<span class="cf">if</span> <span class="st">'proxycommand'</span> <span class="op">in</span> user_config:
-   cfg[<span class="st">'sock'</span>] <span class="op">=</span> paramiko.ProxyCommand(user_config[<span class="st">'proxycommand'</span>])
-
-ssh.<span class="ex">connect</span>(<span class="op">**</span>cfg)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co"># Create a SSH connection</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="im">import</span> paramiko</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="im">import</span> os</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>ssh <span class="op">=</span> paramiko.SSHClient()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>ssh._policy <span class="op">=</span> paramiko.WarningPolicy()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>ssh_config <span class="op">=</span> paramiko.SSHConfig()</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>user_config_file <span class="op">=</span> os.path.expanduser(<span class="st">&quot;~/.ssh/config&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a><span class="cf">if</span> os.path.exists(user_config_file):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    <span class="cf">with</span> <span class="bu">open</span>(user_config_file) <span class="im">as</span> f:</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>        ssh_config.parse(f)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>cfg <span class="op">=</span> {<span class="st">'hostname'</span>: THE_HOST_NAME_IN_CONFIG}</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>user_config <span class="op">=</span> ssh_config.lookup(cfg[<span class="st">'hostname'</span>])</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>cfg[<span class="st">&quot;hostname&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;hostname&quot;</span>]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>cfg[<span class="st">&quot;username&quot;</span>] <span class="op">=</span> user_config[<span class="st">&quot;user&quot;</span>]</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>key<span class="op">=</span>paramiko.RSAKey.from_private_key_file(privateKey)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>cfg[<span class="st">&quot;pkey&quot;</span>] <span class="op">=</span> key</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a><span class="cf">if</span> <span class="st">'proxycommand'</span> <span class="kw">in</span> user_config:</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>   cfg[<span class="st">'sock'</span>] <span class="op">=</span> paramiko.ProxyCommand(user_config[<span class="st">'proxycommand'</span>])</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>ssh.<span class="ex">connect</span>(<span class="op">**</span>cfg)</span></code></pre></div>
 <p>And then you can execute remote commands. For instance, grep the logs for a given day and retrieve the hits to a given resource. This could be accomplished doing:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">cmd <span class="op">=</span> <span class="st">'sudo grep &quot;{}&quot; /var/log/httpd/{} | grep myURL'</span>.<span class="bu">format</span>(dayUnderStudy, access_log_file)
-stdin, stdout, stderr <span class="op">=</span> ssh.exec_command(cmd)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>cmd <span class="op">=</span> <span class="st">'sudo grep &quot;</span><span class="sc">{}</span><span class="st">&quot; /var/log/httpd/</span><span class="sc">{}</span><span class="st"> | grep myURL'</span>.<span class="bu">format</span>(dayUnderStudy, access_log_file)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>stdin, stdout, stderr <span class="op">=</span> ssh.exec_command(cmd)</span></code></pre></div>
 <p>And then manipulating the <code>stdout</code> variable with pure Python code.</p>
 <p>Once done, close the connection in your notebook.</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">ssh.close()</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>ssh.close()</span></code></pre></div>
 <h2 id="creating-a-tunnel-to-a-remote-machine-in-order-to-access-a-third-machine">Creating a tunnel to a remote machine in order to access a third machine</h2>
 <p>This is the classical setup where you want to access databases that are only visible from the machines in your cluster. This can be accomplished by Paramiko itself but I found easier to setup the forwarding with a library that is itself using Paramiko underneathi, <a href="https://pypi.python.org/pypi/sshtunnel">sshtunnel</a>.</p>
 <pre><code>pip install sshtunnel</code></pre>
 <p>So the setup is, we ssh to a machine A that has visibility access to a second machine B. Usually what we want is to do is to map a port in B, for instance MySQL port 3306, to a local free port in our host. We just create a server that maps those ports</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> sshtunnel <span class="im">import</span> SSHTunnelForwarder
-<span class="im">import</span> logging
-
-server <span class="op">=</span> SSHTunnelForwarder(
-   (HOST_A, <span class="dv">22</span>),
-   ssh_username<span class="op">=</span>USER_IN_A, 
-   ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,
-   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B),
-   local_bind_address<span class="op">=</span>(<span class="st">''</span>,MY_LOCAL_PORT),
-   logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) 
-   )
-
-server.start()</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="im">from</span> sshtunnel <span class="im">import</span> SSHTunnelForwarder</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="im">import</span> logging</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>server <span class="op">=</span> SSHTunnelForwarder(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>   (HOST_A, <span class="dv">22</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>   ssh_username<span class="op">=</span>USER_IN_A, </span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>   ssh_private_key<span class="op">=</span><span class="st">&quot;~/.ssh/id_rsa&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>   remote_bind_address<span class="op">=</span>(HOST_B, PORT_B),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>   local_bind_address<span class="op">=</span>(<span class="st">''</span>,MY_LOCAL_PORT),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>   logger<span class="op">=</span>logging.getLogger(<span class="st">&quot;devnull&quot;</span>) </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>   )</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>server.start()</span></code></pre></div>
 <p>If we were doing the tunneling for accessing a remote DB, using that remove access can be done by:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> MySQLdb
-conn<span class="op">=</span> MySQLdb.<span class="ex">connect</span>(host<span class="op">=</span><span class="st">'127.0.0.1'</span>,
-                  port<span class="op">=</span>MY_LOCAL_PORT,
-                  user<span class="op">=</span>DB_USER, 
-                  passwd<span class="op">=</span>DB_PWD,
-                  db<span class="op">=</span>DATABASE)</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="im">import</span> MySQLdb</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>conn<span class="op">=</span> MySQLdb.<span class="ex">connect</span>(host<span class="op">=</span><span class="st">'127.0.0.1'</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>                  port<span class="op">=</span>MY_LOCAL_PORT,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>                  user<span class="op">=</span>DB_USER, </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>                  passwd<span class="op">=</span>DB_PWD,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>                  db<span class="op">=</span>DATABASE)</span></code></pre></div>
 <p>And then closing all connections:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">conn.close()
-server.stop()</code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>conn.close()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>server.stop()</span></code></pre></div>
 </div>
 
     </div>

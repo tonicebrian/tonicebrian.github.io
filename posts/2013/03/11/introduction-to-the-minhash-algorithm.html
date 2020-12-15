@@ -46,30 +46,30 @@
 <table>
 <thead>
 <tr class="header">
-<th align="left">Vowel</th>
-<th align="left">Order</th>
+<th>Vowel</th>
+<th>Order</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">a</td>
-<td align="left">1</td>
+<td>a</td>
+<td>1</td>
 </tr>
 <tr class="even">
-<td align="left">e</td>
-<td align="left">2</td>
+<td>e</td>
+<td>2</td>
 </tr>
 <tr class="odd">
-<td align="left">i</td>
-<td align="left">3</td>
+<td>i</td>
+<td>3</td>
 </tr>
 <tr class="even">
-<td align="left">o</td>
-<td align="left">4</td>
+<td>o</td>
+<td>4</td>
 </tr>
 <tr class="odd">
-<td align="left">u</td>
-<td align="left">5</td>
+<td>u</td>
+<td>5</td>
 </tr>
 </tbody>
 </table>
@@ -77,30 +77,30 @@
 <table>
 <thead>
 <tr class="header">
-<th align="left">Vowel</th>
-<th align="left">Order</th>
+<th>Vowel</th>
+<th>Order</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">a</td>
-<td align="left">5</td>
+<td>a</td>
+<td>5</td>
 </tr>
 <tr class="even">
-<td align="left">e</td>
-<td align="left">2</td>
+<td>e</td>
+<td>2</td>
 </tr>
 <tr class="odd">
-<td align="left">i</td>
-<td align="left">3</td>
+<td>i</td>
+<td>3</td>
 </tr>
 <tr class="even">
-<td align="left">o</td>
-<td align="left">1</td>
+<td>o</td>
+<td>1</td>
 </tr>
 <tr class="odd">
-<td align="left">u</td>
-<td align="left">4</td>
+<td>u</td>
+<td>4</td>
 </tr>
 </tbody>
 </table>
@@ -117,91 +117,88 @@
 <li><p>Use a pseudo-random number generator by picking a large prime number, say <span class="math inline">\(p=2147483647\)</span> and a set of coefficients <span class="math inline">\(\{a_i,b_i\}\)</span> such our hashing functions are defined as <span class="math inline">\(\pi_{i} = (a_i x + b_i) \% p\)</span></p></li>
 </ul>
 <p>In this post we will use the second kind of functions expresed in this Haskell code:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">p ::</span> <span class="dt">Int</span>
-p<span class="fu">=</span><span class="dv">2147483647</span> 
-
-<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
-coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
-
-<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
-hashFuncs <span class="fu">=</span> go coefs
-  <span class="kw">where</span>
-    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
-                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest </code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">p ::</span> <span class="dt">Int</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>p<span class="ot">=</span><span class="dv">2147483647</span> </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">coefs ::</span> [<span class="dt">Int</span>]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>coefs <span class="ot">=</span> unfoldr (<span class="dt">Just</span> <span class="op">.</span> randomR (<span class="dv">0</span>,p)) <span class="op">$</span> mkStdGen <span class="dv">0</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>hashFuncs <span class="ot">=</span> go coefs</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    go theCoefs <span class="ot">=</span> <span class="kw">let</span> (a<span class="op">:</span>b<span class="op">:</span>[],rest) <span class="ot">=</span> <span class="fu">splitAt</span> <span class="dv">2</span> theCoefs</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="op">*</span>x<span class="op">+</span>b) <span class="ot">`mod`</span> p) <span class="op">:</span> go rest </span></code></pre></div>
 <p>So, given a hashing function, which is the minimum hash over a given set? This code gives you that result</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
-minHash f <span class="fu">=</span> foldl' hashAndMin maxBound
-  <span class="kw">where</span>
-    hashAndMin a b <span class="fu">=</span> min a (f b)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>minHash f <span class="ot">=</span> foldl' hashAndMin <span class="fu">maxBound</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    hashAndMin a b <span class="ot">=</span> <span class="fu">min</span> a (f b)</span></code></pre></div>
 <h3 id="shingles">Shingles</h3>
 <p>OK, now you want to compare two sets, <em>A</em> and <em>B</em> to see how similar they are. The similarity measure here will be the number of items they both share, the Jackard coefficient. The time complexity of the set intersection is <span class="math inline">\(O(n+m)\)</span> if you first build a Hash Map and then query it with the second set for existence. If both sets are already sorted you can compare them in <span class="math inline">\(O(n)\)</span> <span class="math inline">\(O(m+n\log n+ m\log m)\)</span>.</p>
 <p>Can you compare them faster? Yes, but only if you want to trade accuracy. The property in the probability formula at the beginning of the post states that with probability the Jackard coefficient the min hashes of the two sets will be equal. That means that if we take <em>r</em> different hashing functions (permutations) and we name <em>s</em> the Jackard coefficient between the tow sets, the probability that all <em>k</em> hashes of each set are equal is <span class="math inline">\(s^r\)</span>. Since this is a collection of Bernoulli trials, the distribution of having <em>k</em> min hashes equal in both sets follows a Binomial distribution with density probability function equal to:</p>
 <p><span class="math display">\[f(k;r,s)= {r \choose k}s^k(1-s)^{r-k}\]</span></p>
 <p>It is known that a random variable distributed according to the binomial distribution, <span class="math inline">\(X \sim B(r,s)\)</span> has <span class="math inline">\(E[X]=rs\)</span>, so a good estimator of <span class="math inline">\(s\)</span> would be to divide the number of matches by the number of hashing functions. This would give you the estimated value of the Jackard coefficient. But before comparing two fingerprints we have to compute them:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
-shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>shingle c nums <span class="ot">=</span> [minHash f nums <span class="op">|</span> f <span class="ot">&lt;-</span> <span class="fu">take</span> c hashFuncs]</span></code></pre></div>
 <p>The shingle function gives us a set of <em>c</em> fingerprints of our original big set of numbers.</p>
 <p>So let’s see it in action. Imagine that we want to compute the Jackard coefficient between the bag of letters in the phrase <em>Humpty Dumpty sat on a wall</em> and <em>Humpty Dumpty had a great fall</em>. First let’s compute the Jackard coefficient according to the definition</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Data.List</span>
-<span class="kw">import </span><span class="dt">System.Random</span>
-<span class="kw">import </span><span class="dt">Data.Char</span>
-<span class="kw">import </span><span class="dt">Data.List</span>
-
-phrase1<span class="fu">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span>
-phrase2<span class="fu">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span>
-mkSet <span class="fu">=</span> nub <span class="fu">.</span> filter isAlpha <span class="fu">.</span> map toLower
-<span class="co">-- Set 1 is the collection of letters in the first phrase</span>
-<span class="co">-- &quot;humptydsaonw&quot;</span>
-set1 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span>
-<span class="co">-- Set 2 is the collection of letters in the second phrase</span>
-<span class="co">-- &quot;humptydagrefl&quot;</span>
-set2 <span class="fu">=</span> map ord <span class="fu">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span>
-           
-jackard <span class="fu">=</span> a<span class="fu">/</span>b
-  <span class="kw">where</span>
-    a <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
-    b <span class="fu">=</span> fromIntegral <span class="fu">$</span>  length (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span>
-    
-<span class="ot">p ::</span> <span class="dt">Int</span>
-p<span class="fu">=</span><span class="dv">2147483647</span> 
-
-<span class="ot">coefs ::</span> [<span class="dt">Int</span>]
-coefs <span class="fu">=</span> unfoldr (<span class="dt">Just</span> <span class="fu">.</span> randomR (<span class="dv">0</span>,p)) <span class="fu">$</span> mkStdGen <span class="dv">0</span>
-
-<span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]
-hashFuncs <span class="fu">=</span> go coefs
-  <span class="kw">where</span>
-    go theCoefs <span class="fu">=</span> <span class="kw">let</span> (a<span class="fu">:</span>b<span class="fu">:</span>[],rest) <span class="fu">=</span> splitAt <span class="dv">2</span> theCoefs
-                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="fu">*</span>x<span class="fu">+</span>b) <span class="ot">`mod`</span> p) <span class="fu">:</span> go rest 
-
-<span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span>
-minHash f <span class="fu">=</span> foldl' hashAndMin maxBound
-  <span class="kw">where</span>
-    hashAndMin a b <span class="fu">=</span> min a (f b)
-
-<span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]
-shingle c nums <span class="fu">=</span> [minHash f nums <span class="fu">|</span> f <span class="ot">&lt;-</span> take c hashFuncs]
-
-shingles1 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="fu">..</span>]
-shingles2 <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="fu">..</span>]
-
-jackard2 <span class="fu">=</span> map approxJackard shingles
-  <span class="kw">where</span> 
-    shingles <span class="fu">=</span> zip shingles1 shingles2
-<span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span>
-    approxJackard (as,bs) <span class="fu">=</span> <span class="kw">let</span> pairs <span class="fu">=</span> zip as bs
-                                matches <span class="fu">=</span> filter (\(a,b) <span class="ot">-&gt;</span> a <span class="fu">==</span> b) pairs
-                                num <span class="fu">=</span> fromIntegral <span class="fu">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span>
-                                den <span class="fu">=</span> fromIntegral <span class="fu">$</span> length<span class="ot"> as ::</span> <span class="dt">Double</span>
-                            <span class="kw">in</span> num<span class="fu">/</span>den</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">System.Random</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Char</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>phrase1<span class="ot">=</span><span class="st">&quot;Humpty Dumpty sat on a wall&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>phrase2<span class="ot">=</span><span class="st">&quot;Humpty Dumpty had a great fall&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>mkSet <span class="ot">=</span> nub <span class="op">.</span> <span class="fu">filter</span> <span class="fu">isAlpha</span> <span class="op">.</span> <span class="fu">map</span> <span class="fu">toLower</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="co">-- Set 1 is the collection of letters in the first phrase</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="co">-- &quot;humptydsaonw&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>set1 <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span> <span class="op">$</span> mkSet phrase1 <span class="co">-- &quot;humptydsaonwl&quot;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a><span class="co">-- Set 2 is the collection of letters in the second phrase</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a><span class="co">-- &quot;humptydagrefl&quot;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>set2 <span class="ot">=</span> <span class="fu">map</span> <span class="fu">ord</span> <span class="op">$</span> mkSet phrase2 <span class="co">-- &quot;humptydagrefl&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>           </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>jackard <span class="ot">=</span> a<span class="op">/</span>b</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>    a <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>  <span class="fu">length</span> (set1 <span class="ot">`intersect`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>    b <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>  <span class="fu">length</span> (set1 <span class="ot">`union`</span> set2)<span class="ot"> ::</span><span class="dt">Double</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a>    </span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a><span class="ot">p ::</span> <span class="dt">Int</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>p<span class="ot">=</span><span class="dv">2147483647</span> </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true"></a><span class="ot">coefs ::</span> [<span class="dt">Int</span>]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a>coefs <span class="ot">=</span> unfoldr (<span class="dt">Just</span> <span class="op">.</span> randomR (<span class="dv">0</span>,p)) <span class="op">$</span> mkStdGen <span class="dv">0</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a><span class="ot">hashFuncs ::</span> [<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>]</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true"></a>hashFuncs <span class="ot">=</span> go coefs</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true"></a>    go theCoefs <span class="ot">=</span> <span class="kw">let</span> (a<span class="op">:</span>b<span class="op">:</span>[],rest) <span class="ot">=</span> <span class="fu">splitAt</span> <span class="dv">2</span> theCoefs</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true"></a>                  <span class="kw">in</span> (\x <span class="ot">-&gt;</span> (a<span class="op">*</span>x<span class="op">+</span>b) <span class="ot">`mod`</span> p) <span class="op">:</span> go rest </span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true"></a><span class="ot">minHash ::</span> (<span class="dt">Int</span><span class="ot">-&gt;</span><span class="dt">Int</span>) <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true"></a>minHash f <span class="ot">=</span> foldl' hashAndMin <span class="fu">maxBound</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true"></a>    hashAndMin a b <span class="ot">=</span> <span class="fu">min</span> a (f b)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true"></a><span class="ot">shingle ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true"></a>shingle c nums <span class="ot">=</span> [minHash f nums <span class="op">|</span> f <span class="ot">&lt;-</span> <span class="fu">take</span> c hashFuncs]</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true"></a>shingles1 <span class="ot">=</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> shingle x set1) [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true"></a>shingles2 <span class="ot">=</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> shingle x set2) [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true"></a></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true"></a>jackard2 <span class="ot">=</span> <span class="fu">map</span> approxJackard shingles</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true"></a>  <span class="kw">where</span> </span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true"></a>    shingles <span class="ot">=</span> <span class="fu">zip</span> shingles1 shingles2</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true"></a><span class="ot">    approxJackard ::</span> ([<span class="dt">Int</span>],[<span class="dt">Int</span>]) <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true"></a>    approxJackard (as,bs) <span class="ot">=</span> <span class="kw">let</span> pairs <span class="ot">=</span> <span class="fu">zip</span> as bs</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true"></a>                                matches <span class="ot">=</span> <span class="fu">filter</span> (\(a,b) <span class="ot">-&gt;</span> a <span class="op">==</span> b) pairs</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true"></a>                                num <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span>length<span class="ot"> matches ::</span> <span class="dt">Double</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true"></a>                                den <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">length</span><span class="ot"> as ::</span> <span class="dt">Double</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true"></a>                            <span class="kw">in</span> num<span class="op">/</span>den</span></code></pre></div>
 <p>If we plot <em>jackard2</em> we have an approximation based on the number of shingles:</p>
-<div class="figure">
-<img src="ApproxJackard.png" />
-
-</div>
+<p><img src="ApproxJackard.png" /></p>
 <h3 id="lost">Lost?</h3>
 <p>OK, let me summarize a little bit.</p>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li>You came here because you have the problem of comparing an object against N different objects and N is very large. </li>
 <li>The comparison you want to perform is by computing intersections between the attributes of objects and compute how many are equal.</li>
 <li>You want a cheap procedure for computing 2)</li>
@@ -209,7 +206,7 @@ jackard2 <span class="fu">=</span> map approxJackard shingles
 <p>So the solution is to transform each object into a set of <em>c</em> different values, and then perform the Jackard coefficient on the reduced set of values. For instance, each object could be the set of friends in a social network, and the value c could be for instance just 10. Here we reduce the computation of the intersection from the hundreds to just 10 values. Your friends got summarized in a set of 10 values.</p>
 <p>Can we do better? Yes. Here we reduced the number of comparison from the cardinality of the number of features of the object to the small number <em>c</em>. But we still have to perform N comparisons against the N individuals in the population. Wouldn’t it be nice to just pick the individuals we think are more likely to have a high Jackard Coefficient? That’s possible with the use of <strong>bands</strong> but since this post is already very long, I’ll leave that for another post.</p>
 <h4 id="references">References</h4>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li><p><a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.8215">Minwise independent permutations</a> The paper with the math that demonstrates the link between the Jackard Coefficient and the probability.</p></li>
 <li><p><a href="http://infolab.stanford.edu/~ullman/mmds.html">Chapter 3</a> of the excellent book “Minning massive datasets”</p></li>
 </ol>

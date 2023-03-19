@@ -1,0 +1,79 @@
+#+title: Awaw Manual To Epub
+
+* Software requirements
+This is the list of packages we need
+- pdf2md (repo [[https://github.com/opendocsg/pdf2md][here]])
+** Installation
+#+begin_src sh
+#+end_src
+
+#+RESULTS:
+
+* Conversion
+First move the file into the working folder holding this document
+#+begin_src sh :results silent
+rm -rf /tmp/awaw-manual
+mkdir /tmp/awaw-manual
+cp /home/cebrian/borralodedentro/manual-AWAW/AWAW_RULES_2018-1.pdf /tmp/awaw-manual/rules.pdf
+#+end_src
+
+Ignore errors from org
+#+begin_src sh :dir /tmp/awaw-manual :results silent
+npx @opendocsg/pdf2md --inputFolderPath=. --outputFolderPath=.
+#+end_src
+
+The indenting that this tool provides is too extreme. Let's trim some levels:
+
+#+begin_src sh :dir /tmp/awaw-manual :results silent
+mv rule.md rules.md # The tool trims last character
+sed -Ei 's/#{3}(#+)/\1/g' rules.md
+#+end_src
+
+Bullets contain some weird characters, let's replace them:
+
+#+begin_src sh :dir /tmp/awaw-manual :results silent
+sed -Ei 's//\n\n-/g' rules.md
+#+end_src
+
+Enumerations usually start within a paragraph. Look for patterns and indent:
+#+begin_src  sh :dir /tmp/awaw-manual :results silent
+perl -i -pe 's/: (\d+\.\d{2,})/:\n\n\1/g' rules.md
+perl -i -pe 's/: ([A-Z]\.)/:\n\n\1/g' rules.md
+#+end_src
+
+Some paragraphs are conflated into previous paragraph, add a line break on numerical entries and convert to bold:
+
+#+begin_src  sh :dir /tmp/awaw-manual :results silent
+perl -i -pe 's/^\s?(\d+\.\d{2,}( [A-Z ]+:)?)/\n\n**\1**/g' rules.md
+#+end_src
+
+Some list are enumerated using capital letters, find those and bold them:
+
+#+begin_src  sh :dir /tmp/awaw-manual :results silent
+perl -i -pe 's/^\s?([A-Z]\.( [A-Z ]+:)?)/\n\n**\1**/g' rules.md
+#+end_src
+
+Remove spurious bolding I introduced on top of the pdf2md tool:
+#+begin_src  sh :dir /tmp/awaw-manual :results silent
+perl -i -pe 's/\*{2}\*+/**/g' rules.md
+perl -i -pe 's/ \*{2}$//g' rules.md
+perl -i -pe 's/^\*{2}$//g' rules.md
+#+end_src
+
+Extract images
+#+begin_src  sh :dir /tmp/awaw-manual :results silent
+pdfimages -png rules.pdf /tmp/awaw-manual/image
+#+end_src
+
+Finally perform conversion
+#+begin_src sh :dir /tmp/awaw-manual :results silent
+pandoc -f markdown -t epub -o awaw.epub --metadata title="A World At War: Rules Booklet" rules.md
+#+end_src
+
+And here you have it:
+
+* TODO El glosario no se procesa adecuadamente
+* TODO Hay que incluir las imágenes en el epub
+* TODO Hay que crear links entre secciones
+Parece que el patrón que hay que buscar es ~rule \d+.\d+~
+* TODO Investigar si se pueden extraer las tablas de alguna forma

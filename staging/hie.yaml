@@ -1,0 +1,3 @@
+cradle:
+  stack:
+    component: "fromSinkAndSource-in-conduit.hs" # your local stack script

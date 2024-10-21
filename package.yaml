@@ -1,0 +1,16 @@
+name: blog
+version: 0.1.0.0
+dependencies:
+  - base
+  - hakyll
+
+executables:
+  blog:
+    main: Main.hs
+    source-dirs: src
+    default-extensions: 
+      - OverloadedStrings
+    ghc-options: 
+      - -Wall 
+      - -Werror
+

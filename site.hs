@@ -26,7 +26,7 @@ main = hakyll $ do
     compile copyFileCompiler
 
   -- static files to copy verbatim
-  match (fromList ["feed/*", "CNAME"]) $ do
+  match ("feed/*" .||. "CNAME") $ do
     route idRoute
     compile copyFileCompiler
 
@@ -132,7 +132,7 @@ mathCtx = field "mathjax" $ \item -> do
   metadata <- getMetadata $ itemIdentifier item
   return $
     case lookupString "mathjax" metadata of
-      Just _ -> "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"></script>"
+      Just _ -> "<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
       Nothing -> ""
 
 ----------------------------------------------------------------------------------

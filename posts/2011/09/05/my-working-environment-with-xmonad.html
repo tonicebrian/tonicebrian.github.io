@@ -52,143 +52,143 @@
 <li><p><strong>lines 52-55</strong>, define how I want the windows to be arranged. Basically, create a specific configuration for Skype in its dedicated workspace, and for the rest of workspaces, don’t hide the menu, allow navigation with the cursors and minimize unwanted windows.</p></li>
 <li><p><strong>lines 57-77</strong>, ensemble the main xmonad window manager with the desired configuration. Spawn the status bar, and append the predefined layouts, keybindings and window hooks. Redefine some keys and fool Java setting the name of the Window Manager to LG3D in order to avoid problems with focus.</p></li>
 </ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">import</span> XMonad</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">DynamicLog</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ICCCMFocus</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageDocks</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">Run</span>(spawnPipe)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Util</span>.<span class="fu">EZConfig</span>(additionalKeys)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">import</span> System.<span class="fu">IO</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">ManageHelpers</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">UrgencyHook</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Hooks</span>.<span class="fu">SetWMName</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Minimize</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">WindowNavigation</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">ToggleLayouts</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">IM</span> as IM</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">PerWorkspace</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Reflect</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="kw">import</span> XMonad.<span class="fu">Layout</span>.<span class="fu">Grid</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a><span class="kw">import</span> Data.<span class="fu">Ratio</span> ((%))</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a><span class="kw">import</span> qualified Data.<span class="fu">Map</span> as M</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a>-- Send applications to their dedicated Workspace</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>myManageHook = composeAll</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>                [ className =? <span class="st">&quot;Skype&quot;</span>         --&gt; doShift <span class="st">&quot;4:skype&quot;</span>,</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a>                  className =? <span class="st">&quot;Thunderbird&quot;</span>   --&gt; doShift <span class="st">&quot;2:mail&quot;</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a>                ]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a>-- Name the workspaces</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a>myWorkspaces = [<span class="st">&quot;1:dev&quot;</span>,<span class="st">&quot;2:mail&quot;</span>,<span class="st">&quot;3:web&quot;</span>,<span class="st">&quot;4:skype&quot;</span>,<span class="st">&quot;5:media&quot;</span>, <span class="st">&quot;6:office&quot;</span>] ++ map show [<span class="dv">7</span>..<span class="dv">9</span>]</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a>-- Add <span class="kw">new</span> Keys</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a>newKeys x = M.<span class="fu">union</span> (keys defaultConfig x) (M.<span class="fu">fromList</span> (myKeys x))</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a>myKeys conf@(XConfig {XMonad.<span class="fu">modMask</span> = modm}) =</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true"></a>              [</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true"></a>              -- Minimize a window</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true"></a>                ((modm, xK_z),               withFocused minimizeWindow)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true"></a>              , ((modm .|. shiftMask, xK_z), sendMessage RestoreNextMinimizedWin  )</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true"></a>              -- Window navigation <span class="kw">with</span> cursors</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true"></a>              , ((modm,                 xK_Right), sendMessage $ Go R)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true"></a>              , ((modm,                 xK_Left ), sendMessage $ Go L)</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true"></a>              , ((modm,                 xK_Up   ), sendMessage $ Go U)</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true"></a>              , ((modm,                 xK_Down ), sendMessage $ Go D)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true"></a>              , ((modm .|. controlMask, xK_Right), sendMessage $ Swap R)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true"></a>              , ((modm .|. controlMask, xK_Left ), sendMessage $ Swap L)</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true"></a>              , ((modm .|. controlMask, xK_Up   ), sendMessage $ Swap U)</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true"></a>              , ((modm .|. controlMask, xK_Down ), sendMessage $ Swap D)</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true"></a>              -- Togle Fullscreen</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true"></a>              , ((modm,                 xK_f    ), sendMessage ToggleLayout)</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true"></a>              ]</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true"></a>-- Define the default layout</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true"></a>skypeLayout = IM.<span class="fu">withIM</span> (<span class="dv">1</span>%<span class="dv">7</span>) (IM.<span class="fu">And</span> (ClassName <span class="st">&quot;Skype&quot;</span>)  (Role <span class="st">&quot;MainWindow&quot;</span>)) Grid</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true"></a>normalLayout = windowNavigation $ minimize $ avoidStruts $ onWorkspace <span class="st">&quot;4:skype&quot;</span> skypeLayout $ layoutHook defaultConfig</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true"></a>myLayout = <span class="fu">toggleLayouts</span> (Full) normalLayout</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true"></a>-- Main executable</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true"></a>main = <span class="kw">do</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true"></a>    xmproc &lt;- spawnPipe <span class="st">&quot;xmobar /home/cebrian/.xmobarrc&quot;</span></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true"></a>    xmonad $ withUrgencyHook NoUrgencyHook $ defaultConfig</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true"></a>        { manageHook = manageDocks &lt;+&gt; myManageHook &lt;+&gt; manageHook defaultConfig</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true"></a>        , keys = newKeys</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true"></a>        , workspaces = myWorkspaces</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true"></a>        , layoutHook = myLayout</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true"></a>        , logHook = takeTopFocus &gt;&gt; dynamicLogWithPP xmobarPP</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true"></a>                        { ppOutput = hPutStrLn xmproc</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true"></a>                        , ppTitle = xmobarColor <span class="st">&quot;green&quot;</span> <span class="st">&quot;&quot;</span> . shorten <span class="dv">50</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true"></a>                        , ppUrgent = xmobarColor <span class="st">&quot;yellow&quot;</span> <span class="st">&quot;red&quot;</span> . xmobarStrip</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true"></a>                        }</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true"></a>        , modMask = mod4Mask     -- Rebind Mod to the Windows key</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true"></a>        , terminal = <span class="st">&quot;terminator&quot;</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true"></a>        , startupHook = setWMName <span class="st">&quot;LG3D&quot;</span></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true"></a>        } `additionalKeys`</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true"></a>        [ ((controlMask .|. shiftMask, xK_l), spawn <span class="st">&quot;xscreensaver-command -lock&quot;</span>)</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true"></a>        , ((controlMask, xK_Print), spawn <span class="st">&quot;sleep 0.2; scrot -s&quot;</span>)</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true"></a>        , ((<span class="dv">0</span>, xK_Print), spawn <span class="st">&quot;scrot&quot;</span>)</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true"></a>        ]</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>DynamicLog</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>ICCCMFocus</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>ManageDocks</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span><span class="ex">Util</span><span class="op">.</span><span class="fu">Run</span><span class="op">(</span>spawnPipe<span class="op">)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span><span class="ex">Util</span><span class="op">.</span><span class="fu">EZConfig</span><span class="op">(</span>additionalKeys<span class="op">)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="ex">System</span><span class="op">.</span>IO</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>ManageHelpers</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>UrgencyHook</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Hooks<span class="op">.</span>SetWMName</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>Minimize</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>WindowNavigation</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>ToggleLayouts</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>IM as IM</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>PerWorkspace</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>Reflect</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> XMonad<span class="op">.</span>Layout<span class="op">.</span>Grid</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="ex">Data</span><span class="op">.</span><span class="fu">Ratio</span> <span class="op">((%))</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> qualified <span class="ex">Data</span><span class="op">.</span><span class="ex">Map</span> as M</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> Send applications to their dedicated Workspace</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>myManageHook <span class="op">=</span> composeAll</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                <span class="op">[</span> className <span class="op">=?</span> <span class="st">&quot;Skype&quot;</span>         <span class="op">--&gt;</span> doShift <span class="st">&quot;4:skype&quot;</span><span class="op">,</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                  className <span class="op">=?</span> <span class="st">&quot;Thunderbird&quot;</span>   <span class="op">--&gt;</span> doShift <span class="st">&quot;2:mail&quot;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>                <span class="op">]</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> <span class="ex">Name</span> the workspaces</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>myWorkspaces <span class="op">=</span> <span class="op">[</span><span class="st">&quot;1:dev&quot;</span><span class="op">,</span><span class="st">&quot;2:mail&quot;</span><span class="op">,</span><span class="st">&quot;3:web&quot;</span><span class="op">,</span><span class="st">&quot;4:skype&quot;</span><span class="op">,</span><span class="st">&quot;5:media&quot;</span><span class="op">,</span> <span class="st">&quot;6:office&quot;</span><span class="op">]</span> <span class="op">++</span> map show <span class="op">[</span><span class="dv">7</span><span class="op">..</span><span class="dv">9</span><span class="op">]</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> Add <span class="kw">new</span> Keys</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>newKeys x <span class="op">=</span> M<span class="op">.</span><span class="fu">union</span> <span class="op">(</span>keys defaultConfig x<span class="op">)</span> <span class="op">(</span>M<span class="op">.</span><span class="fu">fromList</span> <span class="op">(</span>myKeys x<span class="op">))</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>myKeys conf@<span class="op">(</span>XConfig <span class="op">{</span>XMonad<span class="op">.</span>modMask <span class="op">=</span> modm<span class="op">})</span> <span class="op">=</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>              <span class="op">[</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>              <span class="op">--</span> Minimize a window</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>                <span class="op">((</span>modm<span class="op">,</span> xK_z<span class="op">),</span>               withFocused minimizeWindow<span class="op">)</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm <span class="op">.|.</span> shiftMask<span class="op">,</span> xK_z<span class="op">),</span> sendMessage RestoreNextMinimizedWin  <span class="op">)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>              <span class="op">--</span> <span class="ex">Window</span> navigation <span class="kw">with</span> cursors</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm<span class="op">,</span>                 xK_Right<span class="op">),</span> sendMessage $ Go R<span class="op">)</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm<span class="op">,</span>                 xK_Left <span class="op">),</span> sendMessage $ Go L<span class="op">)</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm<span class="op">,</span>                 xK_Up   <span class="op">),</span> sendMessage $ Go U<span class="op">)</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm<span class="op">,</span>                 xK_Down <span class="op">),</span> sendMessage $ Go D<span class="op">)</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm <span class="op">.|.</span> controlMask<span class="op">,</span> xK_Right<span class="op">),</span> sendMessage $ Swap R<span class="op">)</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm <span class="op">.|.</span> controlMask<span class="op">,</span> xK_Left <span class="op">),</span> sendMessage $ Swap L<span class="op">)</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm <span class="op">.|.</span> controlMask<span class="op">,</span> xK_Up   <span class="op">),</span> sendMessage $ Swap U<span class="op">)</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm <span class="op">.|.</span> controlMask<span class="op">,</span> xK_Down <span class="op">),</span> sendMessage $ Swap D<span class="op">)</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>              <span class="op">--</span> Togle Fullscreen</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>              <span class="op">,</span> <span class="op">((</span>modm<span class="op">,</span>                 xK_f    <span class="op">),</span> sendMessage ToggleLayout<span class="op">)</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>              <span class="op">]</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> Define the default layout</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>skypeLayout <span class="op">=</span> IM<span class="op">.</span><span class="fu">withIM</span> <span class="op">(</span><span class="dv">1</span><span class="op">%</span><span class="dv">7</span><span class="op">)</span> <span class="op">(</span>IM<span class="op">.</span><span class="fu">And</span> <span class="op">(</span>ClassName <span class="st">&quot;Skype&quot;</span><span class="op">)</span>  <span class="op">(</span><span class="ex">Role</span> <span class="st">&quot;MainWindow&quot;</span><span class="op">))</span> Grid</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>normalLayout <span class="op">=</span> windowNavigation $ minimize $ avoidStruts $ onWorkspace <span class="st">&quot;4:skype&quot;</span> skypeLayout $ layoutHook defaultConfig</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>myLayout <span class="op">=</span> <span class="fu">toggleLayouts</span> <span class="op">(</span>Full<span class="op">)</span> normalLayout</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> Main executable</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>main <span class="op">=</span> <span class="cf">do</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    xmproc <span class="op">&lt;-</span> spawnPipe <span class="st">&quot;xmobar /home/cebrian/.xmobarrc&quot;</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    xmonad $ withUrgencyHook NoUrgencyHook $ defaultConfig</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> manageHook <span class="op">=</span> manageDocks <span class="op">&lt;+&gt;</span> myManageHook <span class="op">&lt;+&gt;</span> manageHook defaultConfig</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> keys <span class="op">=</span> newKeys</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> workspaces <span class="op">=</span> myWorkspaces</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> layoutHook <span class="op">=</span> myLayout</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> logHook <span class="op">=</span> takeTopFocus <span class="op">&gt;&gt;</span> dynamicLogWithPP xmobarPP</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>                        <span class="op">{</span> ppOutput <span class="op">=</span> hPutStrLn xmproc</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>                        <span class="op">,</span> ppTitle <span class="op">=</span> xmobarColor <span class="st">&quot;green&quot;</span> <span class="st">&quot;&quot;</span> <span class="op">.</span> shorten <span class="dv">50</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>                        <span class="op">,</span> ppUrgent <span class="op">=</span> xmobarColor <span class="st">&quot;yellow&quot;</span> <span class="st">&quot;red&quot;</span> <span class="op">.</span> xmobarStrip</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>                        <span class="op">}</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> modMask <span class="op">=</span> mod4Mask     <span class="op">--</span> Rebind Mod to the Windows key</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> terminal <span class="op">=</span> <span class="st">&quot;terminator&quot;</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> startupHook <span class="op">=</span> setWMName <span class="st">&quot;LG3D&quot;</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> `additionalKeys`</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span> <span class="op">((</span>controlMask <span class="op">.|.</span> shiftMask<span class="op">,</span> xK_l<span class="op">),</span> spawn <span class="st">&quot;xscreensaver-command -lock&quot;</span><span class="op">)</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> <span class="op">((</span>controlMask<span class="op">,</span> xK_Print<span class="op">),</span> spawn <span class="st">&quot;sleep 0.2; scrot -s&quot;</span><span class="op">)</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>        <span class="op">,</span> <span class="op">((</span><span class="dv">0</span><span class="op">,</span> xK_Print<span class="op">),</span> spawn <span class="st">&quot;scrot&quot;</span><span class="op">)</span></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>        <span class="op">]</span></span></code></pre></div>
 <p><strong>.xsession</strong></p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="ex">xrdb</span> -merge .Xresources</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="co"># Configure xrandr for multiple monitors</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="co"># External output may be &quot;VGA&quot; or &quot;VGA-0&quot; or &quot;DVI-0&quot; or &quot;TMDS-1&quot;</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="va">EXTERNAL_OUTPUT=</span><span class="st">&quot;VGA-0&quot;</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="va">INTERNAL_OUTPUT=</span><span class="st">&quot;LVDS&quot;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="co"># EXTERNAL_LOCATION may be one of: left, right, above, or below</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;left&quot;</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="co"># In case I want to have both monitors on</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a><span class="kw">case</span> <span class="st">&quot;</span><span class="va">$EXTERNAL_LOCATION</span><span class="st">&quot;</span><span class="kw"> in</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>       left<span class="kw">|</span>LEFT<span class="kw">)</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>               <span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>               <span class="kw">;;</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>       right<span class="kw">|</span>RIGHT<span class="kw">)</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>               <span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;--right-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>               <span class="kw">;;</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>       top<span class="kw">|</span>TOP<span class="kw">|</span>above<span class="kw">|</span>ABOVE<span class="kw">)</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>               <span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;--above </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>               <span class="kw">;;</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>       bottom<span class="kw">|</span>BOTTOM<span class="kw">|</span>below<span class="kw">|</span>BELOW<span class="kw">)</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>               <span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;--below </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a>               <span class="kw">;;</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>       *<span class="kw">)</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a>               <span class="va">EXTERNAL_LOCATION=</span><span class="st">&quot;--left-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>               <span class="kw">;;</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a><span class="kw">esac</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a><span class="ex">xrandr</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="va">$EXTERNAL_OUTPUT</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">&quot; connected &quot;</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true"></a><span class="kw">if</span><span class="bu"> [</span> <span class="va">$?</span> <span class="ot">-eq</span> 0<span class="bu"> ]</span>; <span class="kw">then</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true"></a>    <span class="ex">xrandr</span> --output <span class="va">$INTERNAL_OUTPUT</span> --off --output <span class="va">$EXTERNAL_OUTPUT</span> --auto</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true"></a>    <span class="co"># Alternative command in case of trouble:</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true"></a>    <span class="co"># (sleep 2; xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_LOCATION) &amp;</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true"></a><span class="kw">else</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true"></a>    <span class="ex">xrandr</span> --output <span class="va">$INTERNAL_OUTPUT</span> --auto --output <span class="va">$EXTERNAL_OUTPUT</span> --off</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true"></a><span class="kw">fi</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true"></a></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true"></a><span class="ex">trayer</span> --edge top --align right --SetDockType true --SetPartialStrut true --expand true --width 15 --height 12 --transparent true --tint 0x000000 <span class="kw">&amp;</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true"></a></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true"></a><span class="ex">xscreensaver</span> -no-splash <span class="kw">&amp;</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true"></a><span class="co"># Allow nautilus to take care of plugin USB drives and Dropbox icons</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true"></a><span class="ex">nautilus</span> --no-desktop -n <span class="kw">&amp;</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true"></a><span class="kw">if</span><span class="bu"> [</span> <span class="ot">-x</span> /usr/bin/nm-applet<span class="bu"> ]</span> ; <span class="kw">then</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true"></a>   <span class="ex">nm-applet</span> --sm-disable <span class="kw">&amp;</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true"></a><span class="kw">fi</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true"></a></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true"></a><span class="kw">if</span><span class="bu"> [</span> <span class="ot">-x</span> /usr/bin/gnome-power-manager<span class="bu"> ]</span> ; <span class="kw">then</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true"></a>   <span class="fu">sleep</span> 1</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true"></a>   <span class="ex">gnome-power-manager</span> <span class="kw">&amp;</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true"></a><span class="kw">fi</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true"></a></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true"></a><span class="ex">/usr/bin/gnome-volume-control-applet</span> <span class="kw">&amp;</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true"></a><span class="ex">dropbox</span> start <span class="kw">&amp;</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true"></a></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true"></a><span class="bu">exec</span> /home/cebrian/.cabal/bin/xmonad</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">xrdb</span> <span class="at">-merge</span> .Xresources</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Configure xrandr for multiple monitors</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># External output may be &quot;VGA&quot; or &quot;VGA-0&quot; or &quot;DVI-0&quot; or &quot;TMDS-1&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="va">EXTERNAL_OUTPUT</span><span class="op">=</span><span class="st">&quot;VGA-0&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="va">INTERNAL_OUTPUT</span><span class="op">=</span><span class="st">&quot;LVDS&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># EXTERNAL_LOCATION may be one of: left, right, above, or below</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;left&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># In case I want to have both monitors on</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="st">&quot;</span><span class="va">$EXTERNAL_LOCATION</span><span class="st">&quot;</span> <span class="kw">in</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>       <span class="ss">left</span><span class="kw">|</span><span class="ss">LEFT</span><span class="kw">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>               <span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;--left-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>               <span class="cf">;;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>       <span class="ss">right</span><span class="kw">|</span><span class="ss">RIGHT</span><span class="kw">)</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>               <span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;--right-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>               <span class="cf">;;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>       <span class="ss">top</span><span class="kw">|</span><span class="ss">TOP</span><span class="kw">|</span><span class="ss">above</span><span class="kw">|</span><span class="ss">ABOVE</span><span class="kw">)</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>               <span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;--above </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>               <span class="cf">;;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>       <span class="ss">bottom</span><span class="kw">|</span><span class="ss">BOTTOM</span><span class="kw">|</span><span class="ss">below</span><span class="kw">|</span><span class="ss">BELOW</span><span class="kw">)</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>               <span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;--below </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>               <span class="cf">;;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>       <span class="pp">*</span><span class="kw">)</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>               <span class="va">EXTERNAL_LOCATION</span><span class="op">=</span><span class="st">&quot;--left-of </span><span class="va">$INTERNAL_OUTPUT</span><span class="st">&quot;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>               <span class="cf">;;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="cf">esac</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="ex">xrandr</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="va">$EXTERNAL_OUTPUT</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">&quot; connected &quot;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="va">$?</span> <span class="ot">-eq</span> 0 <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="ex">xrandr</span> <span class="at">--output</span> <span class="va">$INTERNAL_OUTPUT</span> <span class="at">--off</span> <span class="at">--output</span> <span class="va">$EXTERNAL_OUTPUT</span> <span class="at">--auto</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Alternative command in case of trouble:</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># (sleep 2; xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_LOCATION) &amp;</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="ex">xrandr</span> <span class="at">--output</span> <span class="va">$INTERNAL_OUTPUT</span> <span class="at">--auto</span> <span class="at">--output</span> <span class="va">$EXTERNAL_OUTPUT</span> <span class="at">--off</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="ex">trayer</span> <span class="at">--edge</span> top <span class="at">--align</span> right <span class="at">--SetDockType</span> true <span class="at">--SetPartialStrut</span> true <span class="at">--expand</span> true <span class="at">--width</span> 15 <span class="at">--height</span> 12 <span class="at">--transparent</span> true <span class="at">--tint</span> 0x000000 <span class="kw">&amp;</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="ex">xscreensaver</span> <span class="at">-no-splash</span> <span class="kw">&amp;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Allow nautilus to take care of plugin USB drives and Dropbox icons</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ex">nautilus</span> <span class="at">--no-desktop</span> <span class="at">-n</span> <span class="kw">&amp;</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">-x</span> /usr/bin/nm-applet <span class="bu">]</span> <span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>   <span class="ex">nm-applet</span> <span class="at">--sm-disable</span> <span class="kw">&amp;</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">-x</span> /usr/bin/gnome-power-manager <span class="bu">]</span> <span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>   <span class="fu">sleep</span> 1</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>   <span class="ex">gnome-power-manager</span> <span class="kw">&amp;</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="ex">/usr/bin/gnome-volume-control-applet</span> <span class="kw">&amp;</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="ex">dropbox</span> start <span class="kw">&amp;</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> /home/cebrian/.cabal/bin/xmonad</span></code></pre></div>
 <p><strong>.xmobarrc</strong></p>
 <pre class="plain"><code>Config { font = &quot;-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*&quot;
        , bgColor = &quot;black&quot;
